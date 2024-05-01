@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic trans</title>
+    <link rel="shortcut icon" href="./assets/images/small.jfif" type="image/x-icon">
+</head>
+<body>
+    <img src="./assets/images/full.jfif" class="i1">
+    <div id="content">
+        <h1>WELCOME</h1>
+        <h2>COMIC TRANS - DỊCH TRUYỆN DỄ DÀNG</h2>
+        <br>
+        <label for="api-key">Nhập API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
+        <br>
+        <span id="info">API key không đúng</span>
+        <br>
+        <br>
+        <a id="start_button" href="./app.html">KHỞI CHẠY</a>
+    </div>
+    <!-- CSS -->
+    <style>
+        @font-face {
+            font-family: 'cmf1';
+            src: URL('./fonts/000ReadyforAnythingTB-Regular.ttf') format('truetype');
+        }
+        body{
+            margin: 0;
+            display: flex;
+        }
+        #content{
+            text-align: center;
+            width: 100%;
+            font-family: cmf1;
+            font-size: x-large;
+        }
+        .i1 {
+            height: 100vh;
+            max-width: 50%;
+        }
+        .ip1{
+            border: 2px solid #193834;
+            border-radius: 5px;
+            width: 300px;
+            height: 30px;
+        }
+        .bt1{
+            border: 2px solid #193834;
+            border-radius: 5px;
+            background-color: #f6e3b3;
+            width: 30px;
+            height: 30px;
+        }
+        #info{
+            color: #193834;
+            display: none;
+        }
+        .bt1:hover{
+            background-color: #f0e7d0;
+        }
+        #start_button{
+            padding: 0px 10px 10px 10px;
+            width: 200px;
+            height: 50px;
+            font-family: cmf1;
+            font-size: x-large;
+            color: white;
+            background-color: #4F7D6B;
+            border: 2px solid #193834;
+            border-radius: 5px;
+            display: none;
+            text-decoration: none;
+        }
+        #start_button:hover{
+            background-color: #6c9f8c;
+        }
+    </style>
+    <!-- JS -->
+    <script>
+        const API_SER = 'https://script.google.com/macros/s/AKfycbyJuzl9k3jqg-RioGFKS9mJhHGqFqcWTAvdSvMm_t18WTrkYkX596ZaVa-uLK_kxUQx/exec'
+        key.value = localStorage.API_KEY || '';
+        validate();
+
+        let pending_fetch = false;
+
+        setInterval(()=>{
+            if (pending_fetch) {
+                pending_fetch = false;
+                validate();
+            }
+        },1000);
+        key.addEventListener('keyup',()=>{
+            pending_fetch = true;
+        })
+        async function validate(){
+            info.style.display = 'inline';
+            info.innerText = 'Đang tải dữ liệu...';
+            info.style.color = '#193834';
+            const API_KEY = key.value;
+            if (API_KEY === ''){
+                info.style.display = 'none';
+                return;
+            }
+            const url = API_SER + '?action=test&key='+API_KEY
+            const res = await fetch(url,{
+                redirect: "follow",
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (data.error == "Invalid API key") {
+                info.style.color = 'red';
+                info.innerText = 'API key không đúng!';
+                start_button.style.display = 'none';
+            } else {
+                localStorage.API_KEY = API_KEY;
+                info.innerText = 'Đã xác thực API key';
+                info.style.color = '#00ff00';
+                start_button.style.display = 'initial';
+            }
+        }
+        function toggle_password() {
+        if (key.type === "password") {
+            key.type = "text";
+        } else {
+            key.type = "password";
+        }
+    }
+    </script>
+</body>
+</html>

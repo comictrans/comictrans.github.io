@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@font-face {
+    font-family: 'cmf1';
+    src: URL('./fonts/000ReadyforAnythingTB-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf2';
+    src: URL('./fonts/000AvegaeanceiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf3';
+    src: URL('./fonts/000BlahBlahUCiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf4';
+    src: URL('./fonts/000BlambotClassiciCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf5';
+    src: URL('./fonts/000CollectEmAlliCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf6';
+    src: URL('./fonts/000FrankBellamyiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf7';
+    src: URL('./fonts/000HandOfSeanProiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf8';
+    src: URL('./fonts/000HeroidiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf9';
+    src: URL('./fonts/000HometownHeroiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf10';
+    src: URL('./fonts/000HundredWattiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf11';
+    src: URL('./fonts/000OutOfLineiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf12';
+    src: URL('./fonts/000PiekosProiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf13';
+    src: URL('./fonts/000SkippySharpiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf14';
+    src: URL('./fonts/000WebLettererPiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf15';
+    src: URL('./fonts/000ZoinksiCiel-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'cmf16';
+    src: URL('./fonts/CCSpaghettiWesternSans.ttf') format('truetype');
+}
+
+body{
+    margin: 0;
+}
+#header {
+    background-color: #2E5A53;
+    color: white;
+}
+#pre-content {
+    padding: 10px;
+}
+#content {
+    display: flex;
+    justify-content:space-between;
+    padding: 10px;
+}
+#transcript{
+    width: 30vw;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+#footer{
+    padding: 10px;
+}
+.script{
+    font-family: Arial, Helvetica, sans-serif;
+    position: absolute;
+    width: 100%;
+    
+    height: fit-content;
+    padding: 10px;
+    background-color: lightgray;
+    margin: 5px 5px 10px 10px;
+}
+.script textarea{
+    resize: none;
+    width: 95%;
+    height: 50px;
+}
+.script span{
+    overflow: auto;
+    max-height: 50px;
+    display: block;
+}
+.canvas{
+    width: 30vw;
+}
+.border{
+    border: 5px solid black;
+}
+.border-light{
+    border: 1px solid black;
+}
+.btn1 {
+    width: 50px;
+}
+.center{
+    text-align: center;
+}
+.title {
+    margin: 0;
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.cmf1{
+    font-family: cmf1;
+}

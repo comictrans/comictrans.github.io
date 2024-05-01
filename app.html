@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic trans</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./assets/images/small.jfif" type="image/x-icon">
+</head>
+<body>
+    <div id="root">
+        <div id="header">
+            
+            <h1 class="title cmf1"><a href="./index.html"><img src="./assets/images/small.jfif" height="50px" style="float: left; padding-left: 10px;"></a>COMIC TRANS<br></h1>
+        </div>
+        <div id="pre-content" class = "cmf1">
+            <span>Tải lên ảnh: </span>
+            <input type="file" id="raw_file" name="filename" accept="image/*"  multiple>
+            <hr>
+        </div>
+        <span id="loading" style="padding: 10px;" class="cmf1">ĐANG TẢI...</span>
+        <div id="content">
+            <div>
+                <h3 class="title cmf1">BẢN GỐC<br><button id="scroll_prev" disabled>&lt;</button>&nbsp;<span id="current_scroll">1</span>&nbsp;<button id="scroll_next" disabled>&gt;</button></h3>
+                
+                <canvas id="org_canvas" class="border-light canvas"></canvas>
+            </div>
+            
+            <div id="transcript">
+                
+            </div>
+            <div>
+                <h3 class="title cmf1">XEM TRƯỚC<br><button id="download_btn" class="cmf1">TẢI XUỐNG</button></h3>
+                <canvas id="pre_canvas" class="border-light canvas"></canvas>
+            </div>
+        </div>
+        <div id="footer" class = "cmf1">
+            <span>Đã hoàn thành?: </span><button id="download_all_btn" class="cmf1">TẢI XUỐNG TẤT CẢ</button>
+            <!-- <input type="file" id="raw_file" name="filename" accept="image/*" multiple> -->
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="index.js" defer></script>
+</body>
+</html>
