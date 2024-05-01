@@ -18,8 +18,8 @@
             <input type="file" id="raw_file" name="filename" accept="image/*"  multiple>
             <hr>
         </div>
-        <span id="loading" style="padding: 10px;" class="cmf1">ĐANG TẢI...</span>
-        <div id="content">
+        <span id="loading" style="padding: 10px;" class="cmf1 hidden">ĐANG TẢI...</span>
+        <div id="content" class="hidden">
             <div>
                 <h3 class="title cmf1">BẢN GỐC<br><button id="scroll_prev" disabled>&lt;</button>&nbsp;<span id="current_scroll">1</span>&nbsp;<button id="scroll_next" disabled>&gt;</button></h3>
                 
@@ -34,7 +34,7 @@
                 <canvas id="pre_canvas" class="border-light canvas"></canvas>
             </div>
         </div>
-        <div id="footer" class = "cmf1">
+        <div id="footer" class = "cmf1 hidden">
             <span>Đã hoàn thành?: </span><button id="download_all_btn" class="cmf1">TẢI XUỐNG TẤT CẢ</button>
             <!-- <input type="file" id="raw_file" name="filename" accept="image/*" multiple> -->
         </div>

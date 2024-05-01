@@ -7,7 +7,7 @@ let files = [];
 let current_file = 1;
 let raw_image;
 let pending_render = false;
-const API_SER = 'https://script.google.com/macros/s/AKfycbyJuzl9k3jqg-RioGFKS9mJhHGqFqcWTAvdSvMm_t18WTrkYkX596ZaVa-uLK_kxUQx/exec';
+const API_SER = 'https://script.google.com/macros/s/AKfycbwJHBh0j3FMlvclKdLQIYa1nzFSqsw3ffEBoFtOs3RmuJdu_SVhDaj-QaaLvdhfYqZo/exec';
 const API_KEY = localStorage.API_KEY;
 let loading_progress;
 
@@ -326,7 +326,7 @@ raw_file.addEventListener("change", async (e)=>{
     clearInterval(loading_progress);
     loading_progress = setInterval(()=>{
         loading.innerText = 'ĐANG TẢI... ('+Math.floor(loading_percent)+'%)';
-        loading_percent += (95 - loading_percent)*(Math.random()*.3+.1)
+        loading_percent += (95 - loading_percent)*(Math.random()*.3+.1);
     },1000)
 
     // INIT
@@ -349,7 +349,7 @@ raw_file.addEventListener("change", async (e)=>{
     }
     await init_file(imageDataUrl,blocks);
     
-    loading.style.display = 'none';
+    // loading.style.display = 'none';
     clearInterval(loading_progress);
     content.style.display = 'flex';
     //await translate(blocks);
@@ -365,6 +365,7 @@ raw_file.addEventListener("change", async (e)=>{
         image: imageDataUrl,
         blocks:  blocks
     })
+    loading.innerText = 'Tải lên hoàn tất: 1/'+images.length+' mục'
     for (let i = 1; i < images.length; i++){
         files.push({
             image: await readFileAsDataURL(images[i]),
@@ -373,8 +374,10 @@ raw_file.addEventListener("change", async (e)=>{
         if (i == current_file) {
             scroll_next.disabled = false;
         }
+        loading.innerText = 'Tải lên hoàn tất: '+(i+1)+'/'+images.length+' mục'
     }
     footer.style.display = 'block';
+    loading.style.display = 'none';
 });
 
 async function readFileAsDataURL(file) {
@@ -386,63 +389,86 @@ async function readFileAsDataURL(file) {
     });
   }
 
-async function test_api(){
-    const url = API_SER + '?action=test&key='+API_KEY
-    const res = await fetch(url,{
-        redirect: "follow",
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8",
-          },
-        body: JSON.stringify({})
-    });
-    const data = await res.json();
-    if (data.error == "Invalid API key") {
-        alert('API key đã hết hạn!');
-        window.location.href = './api.html';
-    }
-}
-
 async function i2t(img){
-    const url = API_SER + '?action=i2t&key='+API_KEY
-    const res = await fetch(url,{
-        redirect: "follow",
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8",
-          },
-        body: JSON.stringify({
-            params: img
-        })
-    });
-    const data = await res.json();
-    if (data.error == "Invalid API key") {
-        alert('API key đã hết hạn!');
-        window.location.href = './api.html';
+    const url = API_SER + '?action=i2t&key='+API_KEY;
+    for (let t = 0; t < 10; t ++){
+        const controller = new AbortController();
+        const timeout = setTimeout(()=>controller.abort(),15000);
+        try {
+            const res = await fetch(url,{
+                signal: controller.signal,
+                redirect: "follow",
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                },
+                body: JSON.stringify({
+                    params: img
+                })
+            });
+            const data = await res.json();
+            if (data.error == "Invalid API key") {
+                alert('API key đã hết hạn!');
+                window.location.href = './api.html';
+            }
+            console.log(data);
+            return data.sort((a,b) => a.boundingBox.y - b.boundingBox.y);
+        } catch (error) {
+            console.log('Connection timed out');
+        } finally {
+            clearTimeout(timeout);
+        }
     }
-    console.log(data);
-    return data.sort((a,b) => a.boundingBox.y - b.boundingBox.y);;
+    return null;
 }
 
 async function translate(blocks){
-    const url = API_SER + '?action=translate&key='+API_KEY
-    const res = await fetch(url,{
-        redirect: "follow",
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8",
-          },
-        body: JSON.stringify({
-            params: JSON.stringify(blocks)
-        })
-    });
-    const data = await res.json();
-    if (data.error == "Invalid API key") {
-        alert('API key đã hết hạn!');
-        window.location.href = './api.html';
+    const url = API_SER + '?action=translate&key='+API_KEY;
+    for (let t = 0; t < 10; t ++){
+        const controller = new AbortController();
+        const timeout = setTimeout(()=>controller.abort(),20000);
+        try {
+            const res = await fetch(url,{
+                redirect: "follow",
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                    },
+                body: JSON.stringify({
+                    params: JSON.stringify(blocks)
+                })
+            });
+            const data = await res.json();
+            if (data.error == "Invalid API key") {
+                alert('API key đã hết hạn!');
+                window.location.href = './api.html';
+            }
+            // console.log(data);
+            return data;
+        } catch (error) {
+            console.log('Connection timed out');
+        } finally {
+            clearTimeout(timeout);
+        }
     }
-    // console.log(data);
-    return data;
+    return null;
+    // const res = await fetch(url,{
+    //     redirect: "follow",
+    //     method: "POST",
+    //     headers: {
+    //         "Content-Type": "text/plain;charset=utf-8",
+    //       },
+    //     body: JSON.stringify({
+    //         params: JSON.stringify(blocks)
+    //     })
+    // });
+    // const data = await res.json();
+    // if (data.error == "Invalid API key") {
+    //     alert('API key đã hết hạn!');
+    //     window.location.href = './api.html';
+    // }
+    // // console.log(data);
+    // return data;
 }
 
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
