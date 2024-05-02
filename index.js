@@ -7,7 +7,7 @@ let files = [];
 let current_file = 1;
 let raw_image;
 let pending_render = false;
-const API_SER = 'https://script.google.com/macros/s/AKfycbwJHBh0j3FMlvclKdLQIYa1nzFSqsw3ffEBoFtOs3RmuJdu_SVhDaj-QaaLvdhfYqZo/exec';
+const API_SER = 'https://script.google.com/macros/s/AKfycby-t32_q9XYkSPV5X-I2TfkgdUhiHYb952CqUKEpJ_pCKW6WW49o0SWIJfEy5di-14g/exec';
 const API_KEY = localStorage.API_KEY;
 let loading_progress;
 
@@ -393,7 +393,7 @@ async function i2t(img){
     const url = API_SER + '?action=i2t&key='+API_KEY;
     for (let t = 0; t < 10; t ++){
         const controller = new AbortController();
-        const timeout = setTimeout(()=>controller.abort(),15000);
+        const timeout = setTimeout(()=>controller.abort("Connection timed out"),15000);
         try {
             const res = await fetch(url,{
                 signal: controller.signal,
@@ -402,9 +402,9 @@ async function i2t(img){
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8",
                 },
-                body: JSON.stringify({
-                    params: img
-                })
+                    body: JSON.stringify({
+                        params: img
+                    })
             });
             const data = await res.json();
             if (data.error == "Invalid API key") {
@@ -414,7 +414,7 @@ async function i2t(img){
             console.log(data);
             return data.sort((a,b) => a.boundingBox.y - b.boundingBox.y);
         } catch (error) {
-            console.log('Connection timed out');
+            console.log('Error: ',error);
         } finally {
             clearTimeout(timeout);
         }
@@ -426,7 +426,7 @@ async function translate(blocks){
     const url = API_SER + '?action=translate&key='+API_KEY;
     for (let t = 0; t < 10; t ++){
         const controller = new AbortController();
-        const timeout = setTimeout(()=>controller.abort(),20000);
+        const timeout = setTimeout(()=>controller.abort("Connection timed out"),20000);
         try {
             const res = await fetch(url,{
                 redirect: "follow",
