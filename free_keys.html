@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic trans</title>
+    <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
+    <link rel="stylesheet" href="fonts.css">
+    
+</head>
+<body>
+<div id="root">
+    <div class="header">
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" height="50px" style="position: absolute; left: 10px;"></a>Key miễn phí<a href="./index.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">trở lại</a><br></h1>
+    </div>
+    <div class="content" id="content">
+        Đang tải...
+    </div>
+    <div class="footer">
+        <p>Comic trans - dịch truyện dễ dàng</p>
+    </div>
+</div>
+</body>
+</html>
+
+<style>
+    body {
+        margin: 0;
+        font-family: cmf1, Arial, Helvetica, sans-serif;
+        font-size: large;
+    }
+    .key{
+        border: 2px solid black;
+        border-radius: 5px;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        width: max-content;
+        margin: 5px;
+    }
+    .header {
+        background-color: #2E5A53;
+        color: white;
+        margin: 0;
+        text-align: center; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    input,button{
+        font-family: cmf1, Arial, Helvetica, sans-serif;
+    }
+    h1 {
+        margin: 0;
+    }
+    .content{
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .footer{
+        text-align: center;
+        font-size: smaller;
+    }
+</style>
+
+<script>
+    const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
+    
+    async function fetch_keys(){
+        const res = await fetch(API_SER+"?q=free_keys",{
+            redirect: "follow",
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body:''
+        });
+        const data = await res.json();
+        content.innerHTML = '';
+        if (data.length < 1) content.innerHTML = 'Hiện không có key miễn phí!';
+        for (const key of data){
+            content.innerHTML += `
+                <div class="key">
+                    <span>KEY: <b>${key.key_name}</b></span>&nbsp;|&nbsp;<span>Ngày hiệu lực: <b>${new Date(key.key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b>, Ngày hết hạn: <b>${new Date(key.key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b></span>&nbsp;|&nbsp;<input value="${key.key}" readonly >&nbsp;|&nbsp;<div><button onclick="localStorage.API_KEY = '${key.key}'; location = './index.html'">Sử dụng key này</button>&nbsp;<button onclick="navigator.clipboard.writeText('${key.key}')">Sao chép key</button></div>
+                </div>
+            `;
+        }
+    }
+    fetch_keys();
+</script>

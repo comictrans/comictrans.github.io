@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comic trans</title>
-    <link rel="shortcut icon" href="./assets/images/small.jfif" type="image/x-icon">
+    <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
 </head>
 <body>
-    <img src="./assets/images/full.jfif" class="i1">
     <div id="content">
         <h1>WELCOME</h1>
         <h2>COMIC TRANS - DỊCH TRUYỆN DỄ DÀNG</h2>
-        <br>
+        <img src="./images/small.jfif" class="i1"> <br>
+        
+        <span style="font-size: small;">Chưa có API key? Mua ngay tại fanpage <b><a href="https://www.facebook.com/profile.php?id=61560766713838" target="_blank">Comic Trans</a></b>, hoặc bấm vào <a href="./free_keys.html">đây</a> để xem các key <b>miễn phí</b></span><br>
         <label for="api-key">Nhập API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
         <br>
         <span id="info">API key không đúng</span>
@@ -27,17 +28,31 @@
         }
         body{
             margin: 0;
-            display: flex;
+            background-image: url("./images/full.jfif");
+            background-size: 100% 100%;
+            position: relative;
+            display: grid;
+            place-items: center;
+            height: 100vh;
         }
         #content{
             text-align: center;
-            width: 100%;
+            background-color: white;
+            width: 70%;
+            height: 85vh;
             font-family: cmf1;
             font-size: x-large;
+            border-radius: 5px;
+            border: 1px solid black;
+            box-shadow: 0 0 500px 500px rgba(0, 0, 0, .3);
         }
-        .i1 {
-            height: 100vh;
-            max-width: 50%;
+        .i1{
+            margin-top: 10px;
+            height: 35vh;
+            border-radius: 10px;
+        }
+        h1,h2{
+            margin: 0;
         }
         .ip1{
             border: 2px solid #193834;
@@ -78,7 +93,7 @@
     </style>
     <!-- JS -->
     <script>
-        const API_SER = 'https://script.google.com/macros/s/AKfycby-t32_q9XYkSPV5X-I2TfkgdUhiHYb952CqUKEpJ_pCKW6WW49o0SWIJfEy5di-14g/exec'
+        const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
         key.value = localStorage.API_KEY || '';
         validate();
 
@@ -112,12 +127,13 @@
                 body: JSON.stringify({})
             });
             const data = await res.json();
-            if (data.error == "Invalid API key") {
+            if (!data.success) {
                 info.style.color = 'red';
                 info.innerText = 'API key không đúng!';
                 start_button.style.display = 'none';
             } else {
                 localStorage.API_KEY = API_KEY;
+                localStorage.key_info = JSON.stringify({key_start_date: data.key_start_date, key_expire_date: data.key_expire_date});
                 info.innerText = 'Đã xác thực API key';
                 info.style.color = '#00ff00';
                 start_button.style.display = 'initial';

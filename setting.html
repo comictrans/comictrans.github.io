@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic trans</title>
+    <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
+    <link rel="stylesheet" href="fonts.css">
+    
+</head>
+<body>
+<div id="root">
+    <div class="header">
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" height="50px" style="position: absolute; left: 10px;"></a>cài đặt<a href="./app.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">trở lại</a><br></h1>
+    </div>
+    <div class="content">
+        <label for="api-key">API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
+        <br><span style="font-size: small;" id="key_info"></span>
+        <br><span id="info" hidden>API key không đúng</span>
+        <hr>
+        <label for="input1">Phông chữ mặc định:</label>
+        <select id="input1" name="input1" onchange="update_setting('font',this.value)">
+            <option value="Arial"style="font-family:arial">Arial</option>
+            <option value="cmf2" style="font-family:cmf2">Avegaeance iCiel</option>
+            <option value="cmf3" style="font-family:cmf3">BlahBlahUC iCiel</option>
+            <option value="cmf4" style="font-family:cmf4">Blambot Classic iCiel</option>
+            <option value="cmf5" style="font-family:cmf5">CollectEmAll iCiel</option>
+            <option value="cmf6" style="font-family:cmf6">Frank Bellamy iCiel</option>
+            <option value="cmf7" style="font-family:cmf7">Hand Of Sean Pro iCiel</option>
+            <option value="cmf8" style="font-family:cmf8">Heroid iCiel</option>
+            <option value="cmf9" style="font-family:cmf9">HometownHero iCiel</option>
+            <option value="cmf10" style="font-family:cmf10">Hundred Watt iCiel</option>
+            <option value="cmf11" style="font-family:cmf11">OutOfLine iCiel</option>
+            <option value="cmf12" style="font-family:cmf12">PiekosPro iCiel</option>
+            <option value="cmf1" style="font-family:cmf1" selected>ReadyforAnything TB</option>
+            <option value="cmf13" style="font-family:cmf13">SkippySharp iCiel</option>
+            <option value="'Times New Roman'" style="font-family:'Times New Roman'">Times New Roman</option>
+            <option value="cmf14" style="font-family:cmf14">WebLettererP iCiel</option>
+            <option value="cmf15" style="font-family:cmf15">Zoinks iCiel</option>
+            <option value="cmf16" style="font-family:cmf16">SpaghettiWesternSans iCiel</option>
+        </select>
+        <br><label for="input2">Bỏ qua sfx:</label><input type="checkbox" id="input2" name="input2" onchange="update_setting('ignore_sfx',this.checked)">
+        <br><label for="input3">Tự động gộp ảnh:</label><input type="checkbox" id="input3" name="input3" onchange="update_setting('merge_file',this.checked)">
+        <br><label for="input4">Định dạng tải xuống:</label>
+        <select id="input4" name="input4" onchange="update_setting('file_extension',this.value)">
+            <option value="jpeg" >.jpg</option>
+            <option value="png" >.png</option>
+            <option value="webp" >.webp</option>
+        </select>
+        <hr>
+    </div>
+    <div class="footer">
+        <p>Comic trans - dịch truyện dễ dàng</p>
+    </div>
+</div>
+</body>
+</html>
+
+<style>
+    body {
+        margin: 0;
+        font-family: cmf1, Arial, Helvetica, sans-serif;
+        font-size: large;
+    }
+    .header {
+        background-color: #2E5A53;
+        color: white;
+        margin: 0;
+        text-align: center; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    h1 {
+        margin: 0;
+    }
+    .content{
+        text-align: center;
+    }
+    .i1 {
+        height: 100vh;
+        max-width: 50%;
+    }
+    .ip1{
+        border: 2px solid #193834;
+        border-radius: 5px;
+        width: 300px;
+        height: 25px;
+        padding-top: 7px;
+    }
+    .bt1{
+        
+        border: 2px solid #193834;
+        border-radius: 5px;
+        background-color: #f6e3b3;
+        width: 30px;
+        height: 30px;
+    }
+    .footer{
+        text-align: center;
+        font-size: smaller;
+    }.content{
+        padding: 10px;
+    }
+</style>
+
+<script>
+    const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
+    key.value = localStorage.API_KEY || '';
+    const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
+
+    input1.value = SETTING.font || "cmf1";
+    input2.checked = (SETTING.ignore_sfx === undefined)? true : SETTING.ignore_sfx;
+    input3.checked = (SETTING.merge_file === undefined)? true : SETTING.merge_file;
+    input4.value = (SETTING.file_extension === undefined)? 'jpeg' : SETTING.file_extension;
+
+    key_info.innerText = `Ngày hiệu lực: ${new Date(JSON.parse(localStorage.key_info).key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} | Ngày hết hạn: ${new Date(JSON.parse(localStorage.key_info).key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+
+    function update_setting(key,value){
+        SETTING[key] = value;
+        localStorage.setting = JSON.stringify(SETTING);
+    }
+
+    let pending_fetch = false;
+
+    setInterval(()=>{
+        if (pending_fetch) {
+            pending_fetch = false;
+            validate();
+        }
+    },1000);
+    key.addEventListener('keyup',()=>{
+        pending_fetch = true;
+    })
+    async function validate(){
+        info.hidden = false;
+        info.innerText = 'Đang tải dữ liệu...';
+        info.style.color = '#193834';
+        const API_KEY = key.value;
+        if (API_KEY === ''){
+            info.hidden = true;
+            return;
+        }
+        const url = API_SER + '?action=test&key='+API_KEY
+        const res = await fetch(url,{
+            redirect: "follow",
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!data.success) {
+            info.style.color = 'red';
+            info.innerText = 'API key không đúng!';
+        } else {
+            localStorage.API_KEY = API_KEY;
+            localStorage.key_info = JSON.stringify({key_start_date: data.key_start_date, key_expire_date: data.key_expire_date});
+            info.innerText = 'Đã xác thực API key';
+            info.style.color = '#00ff00';
+            key_info.innerText = `Ngày hiệu lực: ${new Date(JSON.parse(localStorage.key_info).key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} | Ngày hết hạn: ${new Date(JSON.parse(localStorage.key_info).key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+        }
+    }
+    function toggle_password() {
+        if (key.type === "password") {
+            key.type = "text";
+        } else {
+            key.type = "password";
+        }
+    }
+</script>

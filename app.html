@@ -1,47 +1,151 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comic trans</title>
+    <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
+    <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="shortcut icon" href="./assets/images/small.jfif" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script> 
+    <script src="index.js" defer></script>
+    
 </head>
 <body>
-    <div id="root">
-        <div id="header">
-            
-            <h1 class="title cmf1"><a href="./index.html"><img src="./assets/images/small.jfif" height="50px" style="float: left; padding-left: 10px;"></a>COMIC TRANS<br></h1>
+<div id="root">
+    <a href="#" id="scroll_up_btn">^</a>
+    <div class="header">
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" height="50px" style="position: absolute; left: 10px;"></a>COMIC TRANS<a href="./setting.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">⚙️</a><br></h1>
+    </div>
+    <div class="upload">
+        <div id="upload_zone">
+            <input type="file" id="file_upload" name="file_upload" accept="image/*"  multiple hidden>
+            <label for="file_upload" >Kéo thả ảnh hoặc bấm vào đây để tải ảnh lên</label>
         </div>
-        <div id="pre-content" class = "cmf1">
-            <span>Tải lên ảnh: </span>
-            <input type="file" id="raw_file" name="filename" accept="image/*"  multiple>
-            <hr>
+        <span id="upload_progress"></span>&nbsp;<button id="download_all_btn" hidden disabled>Tải xuống tất cả</button><progress id="upload_progress_bar" value="0" max="0" style="float: right; margin: 10px;" hidden></progress>
+    </div>
+    <hr>
+    <div class="content" hidden>
+        <div class="navigation">
+            <button id="page_button1" onclick="set_page(current_page-1)" disabled>&lt;</button>&nbsp;<span id="page_display">Trang: 1/1</span>&nbsp;<button id="page_button2" onclick="set_page(current_page+1)" disabled>&gt;</button>
+            <br>
+            <button id="download_btn">Tải xuống</button>
         </div>
-        <span id="loading" style="padding: 10px;" class="cmf1 hidden">ĐANG TẢI...</span>
-        <div id="content" class="hidden">
-            <div>
-                <h3 class="title cmf1">BẢN GỐC<br><button id="scroll_prev" disabled>&lt;</button>&nbsp;<span id="current_scroll">1</span>&nbsp;<button id="scroll_next" disabled>&gt;</button></h3>
-                
-                <canvas id="org_canvas" class="border-light canvas"></canvas>
-            </div>
-            
-            <div id="transcript">
-                
-            </div>
-            <div>
-                <h3 class="title cmf1">XEM TRƯỚC<br><button id="download_btn" class="cmf1">TẢI XUỐNG</button></h3>
-                <canvas id="pre_canvas" class="border-light canvas"></canvas>
-            </div>
+        <br>
+        <div class="tabs-nav" id="nav">
+            <button class="tabs-nav-child active" onclick="set_active_tab(0)">Dịch</button>
+            <button class="tabs-nav-child" onclick="set_active_tab(1)">Xóa chữ khỏi nền</button>
         </div>
-        <div id="footer" class = "cmf1 hidden">
-            <span>Đã hoàn thành?: </span><button id="download_all_btn" class="cmf1">TẢI XUỐNG TẤT CẢ</button>
-            <!-- <input type="file" id="raw_file" name="filename" accept="image/*" multiple> -->
+        <div class="tabs-content" id="tabs">
+            <div class="tabs-content-child active" id="tab1">
+                <div class="left-wrapper">
+                    <img id="img1">
+                    <canvas id="canvas1"></canvas>
+                </div>
+                <div class="mid-wrapper">
+                    <div class="section">
+                        <button id="add_text_button">Thêm ô chữ</button>
+                    </div>
+                    <div class="section" hidden>
+                        <button id="remove_text_button" >Xóa ô chữ này</button>
+                    </div>
+                    <div class="section" hidden>
+                        <textarea id="input0" placeholder="Nhập chữ vào đây" onkeyup="pages[current_page].blocks.find(b=>b.id == selected_text).translation = this.value; render_texts(pages[current_page]); [...document.querySelectorAll('.text_region')].find(e=>e.block_id==selected_text).scrollIntoViewIfNeeded()"></textarea>
+                    </div>
+                    <div class="section" hidden>
+                        <select id="input1" name="input1" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.font = this.value; render_texts(pages[current_page])">
+                            <option value="Arial"style="font-family:arial">Arial</option>
+                            <option value="cmf2" style="font-family:cmf2">Avegaeance iCiel</option>
+                            <option value="cmf3" style="font-family:cmf3">BlahBlahUC iCiel</option>
+                            <option value="cmf4" style="font-family:cmf4">Blambot Classic iCiel</option>
+                            <option value="cmf5" style="font-family:cmf5">CollectEmAll iCiel</option>
+                            <option value="cmf6" style="font-family:cmf6">Frank Bellamy iCiel</option>
+                            <option value="cmf7" style="font-family:cmf7">Hand Of Sean Pro iCiel</option>
+                            <option value="cmf8" style="font-family:cmf8">Heroid iCiel</option>
+                            <option value="cmf9" style="font-family:cmf9">HometownHero iCiel</option>
+                            <option value="cmf10" style="font-family:cmf10">Hundred Watt iCiel</option>
+                            <option value="cmf11" style="font-family:cmf11">OutOfLine iCiel</option>
+                            <option value="cmf12" style="font-family:cmf12">PiekosPro iCiel</option>
+                            <option value="cmf1" style="font-family:cmf1" selected>ReadyforAnything TB</option>
+                            <option value="cmf13" style="font-family:cmf13">SkippySharp iCiel</option>
+                            <option value="cmf16" style="font-family:cmf16">SpaghettiWesternSans iCiel</option>
+                            <option value="'Times New Roman'" style="font-family:'Times New Roman'">Times New Roman</option>
+                            <option value="cmf14" style="font-family:cmf14">WebLettererP iCiel</option>
+                            <option value="cmf15" style="font-family:cmf15">Zoinks iCiel</option>
+                        </select>
+                        <input id="input2" name="input2" type="number" min="1" value="16" style="width: calc(100% - 188px - 0.8px - 0.8px - 5px - 0.8px - 0.8px - 5px);" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.font_size = Number(this.value); render_texts(pages[current_page])">
+                        <hr>
+                        <span>Chữ:</span>
+                        <input id="input3" name="input3" type="color" value="#000000" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.color = this.value; render_texts(pages[current_page])">
+                        <select id="input4" name="input4" style="font-family: cmf1;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.text_align = this.value; render_texts(pages[current_page])">
+                            <option value="left" >Căn trái</option>
+                            <option value="center">Căn giữa</option>
+                            <option value="right">Căn Phải</option>
+                        </select>
+                        <hr>
+                        <span>Viền:</span>
+                        <input id="input5" name="input5" type="color" value="#000000" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.border = this.value; render_texts(pages[current_page])">
+                        <input id="input6" name="input6" type="number" min="0" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.border_width = Number(this.value); render_texts(pages[current_page])">
+                    </div>
+                    <div class="section" hidden>
+                        <span>Xoay:</span>
+                        <input id="input7" name="input7" type="number" value="0" style="width: 70.8px;" onchange="this.value = (Number(this.value) + 360) % 360;pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.rotate = Number(this.value) * Math.PI/180; render_texts(pages[current_page])">
+                        <hr>
+                        <span>Rộng:</span>
+                        <input id="input8" name="input8" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.width = Number(this.value); render_texts(pages[current_page])">
+                        <span>Cao:</span>
+                        <input id="input9" name="input9" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.height = Number(this.value); render_texts(pages[current_page])">
+                        <hr>
+                        <span>X:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        <input id="input10" name="input10" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.x = Number(this.value); render_texts(pages[current_page])">
+                        <span>Y:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        <input id="input11" name="input11" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.y = Number(this.value); render_texts(pages[current_page])">
+                    </div>
+                </div>
+                <div class="right-wrapper" >
+                    <!-- <div class="highlight"></div>
+                    <div class="highlight"></div>
+                    <div class="highlight" style="background-color: yellow;"></div> -->
+                    <svg id="rotate_handle" fill="black" ondragstart="return false;" height="200px" width="200px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-25.72 -25.72 265.81 265.81" xml:space="preserve"><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#00f500" stroke-width="42.8734"> <path transform="translate(-50%,-50%) rotate(270)" d="M202.403,95.22c0,46.312-33.237,85.002-77.109,93.484v25.663l-69.76-40l69.76-40v23.494 c27.176-7.87,47.109-32.964,47.109-62.642c0-35.962-29.258-65.22-65.22-65.22s-65.22,29.258-65.22,65.22 c0,9.686,2.068,19.001,6.148,27.688l-27.154,12.754c-5.968-12.707-8.994-26.313-8.994-40.441C11.964,42.716,54.68,0,107.184,0 S202.403,42.716,202.403,95.22z"></path> </g><g id="SVGRepo_iconCarrier" > <path transform="translate(-50%,-50%) rotate(270)" d="M202.403,95.22c0,46.312-33.237,85.002-77.109,93.484v25.663l-69.76-40l69.76-40v23.494 c27.176-7.87,47.109-32.964,47.109-62.642c0-35.962-29.258-65.22-65.22-65.22s-65.22,29.258-65.22,65.22 c0,9.686,2.068,19.001,6.148,27.688l-27.154,12.754c-5.968-12.707-8.994-26.313-8.994-40.441C11.964,42.716,54.68,0,107.184,0 S202.403,42.716,202.403,95.22z"></path> </g></svg>
+                    <div id="crop_handle_1" class="crop_handle"></div>
+                    <div id="crop_handle_2" class="crop_handle"></div>
+                    <div id="crop_handle_3" class="crop_handle"></div>
+                    <div id="crop_handle_4" class="crop_handle"></div>
+                    <canvas id="canvas2" ondragstart="return false;"></canvas>
+                </div>
+            </div>
+            <div class="tabs-content-child" id="tab2">
+                <div class="left-wrapper">
+                    <img id="img2">
+                    <canvas id="canvas3" ></canvas>
+                </div>
+                <div class="mid-wrapper">
+                    <div class="section" style="height: 100px; display: grid;">
+                        <div id="mask_tool0"></div>
+                    </div>
+                    <div class="section">
+                        <button id="mask_tool1" style="width: 50%;" onclick="mask_tool1.disabled = true; mask_tool2.disabled = false; pen_mode = 0; mask_tool0.style['border-color'] = 'white'">Bút thêm</button><button id="mask_tool2" style="width: 50%;" onclick="mask_tool1.disabled = false; mask_tool2.disabled = true; pen_mode = 1;  mask_tool0.style['border-color'] = 'red'" disabled>Bút xóa</button>
+                    </div>
+                    <div class="section">
+                        <span>Độ lớn:</span>
+                        <input type="number" id="mask_tool3" name="penSize" min="1" max="50" value="10" onchange="mask_tool4.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)* canvas4.offsetWidth/ canvas4.width + 'px'">
+                        <input type="range" id="mask_tool4" name="penSize" min="1" max="50" value="10" onchange="mask_tool3.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)* canvas4.offsetWidth/ canvas4.width + 'px'">
+                    </div>
+                </div>
+                <div class="right-wrapper">
+                    <canvas id="canvas4"></canvas>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- JAVASCRIPT -->
-    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script src="index.js" defer></script>
+    <div hidden>
+        <canvas id="canvas5"></canvas>
+        <canvas id="canvas6"></canvas>
+        <img id="img3">
+    </div>
+    <div class="footer">
+        <p>Comic trans - dịch truyện dễ dàng</p>
+    </div>
+</div>
 </body>
 </html>
