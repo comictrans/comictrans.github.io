@@ -1,0 +1,13 @@
+:root{
+    --background: #303030;
+    --soft-bg: #5f5e5e;
+    --text: #FFFFFF;
+
+    --tab: #686868;
+    --section: #2f432f;
+
+    --button-1: #2f432f;
+    --button-bg-1: #54400f;
+    --button-bg-hover-1: #b38a23;
+    --border-1: #578982;
+}
