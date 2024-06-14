@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comic trans</title>
     <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
+    <link rel="stylesheet" href="theme_light.css" id="web_theme">
 </head>
 <body>
     <div id="content">
         <h1>WELCOME</h1>
         <h2>COMIC TRANS - DỊCH TRUYỆN DỄ DÀNG</h2>
-        <img src="./images/small.jfif" class="i1"> <br>
+        <img src="./images/small.jfif" alt="logo" class="i1"> <br>
         
         <span style="font-size: small;">Chưa có API key? Mua ngay tại fanpage <b><a href="https://www.facebook.com/profile.php?id=61560766713838" target="_blank">Comic Trans</a></b>, hoặc bấm vào <a href="./free_keys.html">đây</a> để xem các key <b>miễn phí</b></span><br>
         <label for="api-key">Nhập API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
@@ -30,14 +31,19 @@
             margin: 0;
             background-image: url("./images/full.jfif");
             background-size: 100% 100%;
+            /* background-position: 0 5%; */
             position: relative;
             display: grid;
             place-items: center;
             height: 100vh;
+            color: var(--text);
+        }
+        a{
+            color: blue;
         }
         #content{
             text-align: center;
-            background-color: white;
+            background-color: var(--background);
             width: 70%;
             height: 85vh;
             font-family: cmf1;
@@ -55,24 +61,27 @@
             margin: 0;
         }
         .ip1{
-            border: 2px solid #193834;
+            border: 2px solid var(--border-1);
             border-radius: 5px;
             width: 300px;
             height: 30px;
+            background-color: var(--soft-bg);
+            color: var(--text);
         }
         .bt1{
-            border: 2px solid #193834;
+            color: var(--text);
+            border: 2px solid var(--border-1);
             border-radius: 5px;
-            background-color: #f6e3b3;
+            background-color: var(--button-bg-1);
             width: 30px;
             height: 30px;
         }
         #info{
-            color: #193834;
+            color: var(--border-1);
             display: none;
         }
         .bt1:hover{
-            background-color: #f0e7d0;
+            background-color: var(--button-bg-hover-1);
         }
         #start_button{
             padding: 0px 10px 10px 10px;
@@ -93,7 +102,9 @@
     </style>
     <!-- JS -->
     <script>
-        const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
+        const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec';
+        const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
+        web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
         key.value = localStorage.API_KEY || '';
         validate();
 
@@ -111,7 +122,7 @@
         async function validate(){
             info.style.display = 'inline';
             info.innerText = 'Đang tải dữ liệu...';
-            info.style.color = '#193834';
+            info.style.color = 'var(--border-1)';
             const API_KEY = key.value;
             if (API_KEY === ''){
                 info.style.display = 'none';
@@ -133,6 +144,7 @@
                 start_button.style.display = 'none';
             } else {
                 localStorage.API_KEY = API_KEY;
+                // console.log(data)
                 localStorage.key_info = JSON.stringify({key_start_date: data.key_start_date, key_expire_date: data.key_expire_date});
                 info.innerText = 'Đã xác thực API key';
                 info.style.color = '#00ff00';

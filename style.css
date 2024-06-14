@@ -2,6 +2,8 @@ body {
     margin: 0;
     font-family: cmf1, Arial, Helvetica, sans-serif;
     font-size: large;
+    background-color: var(--background);
+    color: var(--text);
 }
 button{
     font-family: cmf1;
@@ -39,7 +41,7 @@ h1 {
     height: 100px;
     color: white;
     border: 3px dashed white;
-    background-color: #617D61;
+    background-color: var(--button-1);
     display:grid;
 }
 #upload_zone:hover{
@@ -87,7 +89,7 @@ h1 {
     background-color: #f2faf2;
 }
 .tabs-nav-child.active{
-    background-color: #d8edd8;
+    background-color: var(--tab);
     border: 1px solid gray;
     border-radius: 4px 4px 0 0;
     border-bottom: none;
@@ -97,7 +99,7 @@ h1 {
     position: relative;
     border: 1px solid gray;
     border-top: none;
-    background-color: #d8edd8;
+    background-color: var(--tab);
     padding: 10px;
 }
 .tabs-content-child.active{
@@ -143,7 +145,7 @@ canvas {
     border: 1px solid black;
 }
 .upper-section,.section{
-    background-color: #617D61;
+    background-color: var(--section);
     width: calc(100% - 10px);
     padding: 5px;
     font-size: small;
@@ -254,4 +256,10 @@ canvas {
     margin: auto;
     opacity: .5;
     box-shadow: 0 0 0px 2px black
+}
+.toggle-btn[value=true]{
+    color: #000000;
+}
+.toggle-btn[value=false]{
+    color: #8e8e8e;
 }

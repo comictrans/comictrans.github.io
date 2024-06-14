@@ -8,6 +8,7 @@ const SETTING = {...((localStorage.setting) ? JSON.parse(localStorage.setting) :
     ignore_sfx: true,
     merge_file: true
 }};
+web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
 let unsaved = false;
 
 let cancel_upload = false;
@@ -19,6 +20,12 @@ let is_drawing = false; //user input for masking
 let pen_mode = 1; // for masking
 let pen_size = 10; // for masking
 let x,y; // for masking
+
+let last_click_el; 
+let clipboard;
+let pre_history;
+let history = [];
+let future = [];
 
 let selected_text; // for translating
 function init(){
@@ -98,8 +105,10 @@ function init(){
     // BUTTON
     remove_text_button.addEventListener('click',async ()=>{
         const page = pages[current_page];
-        const regen_redraw = page.blocks.find(b=>b.id == selected_text).covers.length>0;
-        page.blocks.splice(page.blocks.indexOf(page.blocks.find(b=>b.id == selected_text)),1); 
+        const block = page.blocks.find(b=>b.id == selected_text);
+        const regen_redraw = block.covers.length>0;
+        write_to_history(block,current_page);
+        page.blocks.splice(page.blocks.indexOf(block),1); 
         await generate_mask(page,regen_redraw);
         generate_redraw(page,regen_redraw);
         render_texts(page);
@@ -110,12 +119,14 @@ function init(){
         const scaleY = canvas2.offsetHeight/ canvas2.height || canvas4.offsetHeight/ canvas4.height;
         const x = (canvas2.getBoundingClientRect().width*.2) / scaleX;
         const y = (e.clientY - canvas2.getBoundingClientRect().y+ canvas2.getBoundingClientRect().width*.2) / scaleY;
+        const font_size = Math.round(canvas2.getBoundingClientRect().width * .04 / scaleX);
         pages[current_page].blocks.push({
+            is_user_box: true,
             boundingBox:{
                 x: x,
                 y: y,
-                width: canvas2.getBoundingClientRect().width * .2,
-                height: canvas2.getBoundingClientRect().width * .2,
+                width: canvas2.getBoundingClientRect().width * .1 / scaleX,
+                height: canvas2.getBoundingClientRect().width * .1  / scaleY,
                 rotate: 0
             },
             covers:[],
@@ -123,46 +134,123 @@ function init(){
             translation: "",
             style:{
                 border: "#FFFFFF",
-                border_width: 10,
+                border_width: Math.round(font_size * .25),
                 color: "#000000",
                 font: SETTING.font,
-                font_size: 40,
-                text_align: "center"
+                font_size: font_size,
+                text_align: "center",
+                bold: false,
+                italic: false,
             }
         });
+        write_to_history({id:block_id_counter, boundingBox: null},current_page);
         selected_text = block_id_counter;
         render_texts(pages[current_page]);
         const el = document.querySelector(".text_region.active");
         el.click();
         el.click();
     });
+    // SHOTCUT KEYS
+    document.addEventListener('click',e=>{
+        last_click_el = e.target;
+    })
+    document.addEventListener("keydown", async (e)=>{
+        if (e.key === "Backspace" || e.key === "Delete") {
+            const el = document.querySelector(".text_region.active");
+            if (last_click_el != el) return;
+            const page = pages[current_page];
+            const block = page.blocks.find(b=>b.id == selected_text);
+            if (!block) return;
+            write_to_history(block,current_page);
+            const regen_redraw = block.covers.length>0;
+            page.blocks.splice(page.blocks.indexOf(block),1); 
+            await generate_mask(page,regen_redraw);
+            generate_redraw(page,regen_redraw);
+            render_texts(page);
+            set_text_edit_panel(true);
+            return;
+        }
+        if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
+            const page = pages[current_page];
+            const block = page.blocks.find(b=>b.id == selected_text);
+            clipboard = block;
+            return;
+        }
+        if (e.ctrlKey && (e.key === "v" || e.key === "V")) {
+            if (!clipboard) return;
+            const scaleX = canvas2.offsetWidth/ canvas2.width || canvas4.offsetWidth/ canvas4.width;
+            const scaleY = canvas2.offsetHeight/ canvas2.height || canvas4.offsetHeight/ canvas4.height;
+            const y = (add_text_button.getBoundingClientRect().y - canvas2.getBoundingClientRect().y+ canvas2.getBoundingClientRect().width*.2) / scaleY;
+            pages[current_page].blocks.push({
+                is_user_box: true,
+                boundingBox:{
+                    x: clipboard.boundingBox.width * .6,
+                    y: y,
+                    width: clipboard.boundingBox.width,
+                    height: clipboard.boundingBox.height,
+                    rotate: clipboard.boundingBox.rotate
+                },
+                covers:[],
+                id: ++block_id_counter,
+                translation: clipboard.translation,
+                style: clipboard.style
+            });
+            write_to_history({id:block_id_counter, boundingBox: null},current_page);
+            selected_text = block_id_counter;
+            render_texts(pages[current_page]);
+            const el = document.querySelector(".text_region.active");
+            el.click();
+            el.click();
+            return;
+        }
+        if (e.ctrlKey && (e.key === "z" || e.key === "Z")) {
+            undo();
+            return;
+        }
+        if (e.ctrlKey && (e.key === "y" || e.key === "Y")) {
+            redo();
+            return;
+        }
+
+    })
 
     // ROTATE & CROP HANDLES
     rotate_handle.addEventListener('mousedown',() =>{
         rotate_handle.is_rotating = true;
         rotate_handle.style.fill = "yellow";
+        const el = document.querySelector(".text_region.active");
+        const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
+        write_to_history(block,current_page);
     });
     crop_handle_1.addEventListener('mousedown',() =>{
         crop_handle_1.is_cropping = true;
         const el = document.querySelector(".text_region.active");
+        const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
+        write_to_history(block,current_page);
         crop_handle_1.org_height = el.height;
         crop_handle_1.style["background-color"] = "yellow";
     });
     crop_handle_2.addEventListener('mousedown',() =>{
         crop_handle_2.is_cropping = true;
         const el = document.querySelector(".text_region.active");
+        const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
+        write_to_history(block,current_page);
         crop_handle_2.org_height = el.height;
         crop_handle_2.style["background-color"] = "yellow";
     });
     crop_handle_3.addEventListener('mousedown',() =>{
         crop_handle_3.is_cropping = true;
         const el = document.querySelector(".text_region.active");
+        const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
+        write_to_history(block,current_page);
         crop_handle_3.org_height = el.height;
         crop_handle_3.style["background-color"] = "yellow";
     });
     crop_handle_4.addEventListener('mousedown',() =>{
         crop_handle_4.is_cropping = true;
         const el = document.querySelector(".text_region.active");
+        const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
+        write_to_history(block,current_page);
         crop_handle_4.org_height = el.height;
         crop_handle_4.style["background-color"] = "yellow";
     });
@@ -236,6 +324,7 @@ function init(){
             el.style.height = dis + "px";
             el.style.left = c_x + "px";
             el.style.top =c_y+ "px";
+
             block.boundingBox.height = dis / scaleY;
             block.boundingBox.x = c_x / scaleX;
             block.boundingBox.y = c_y / scaleY;
@@ -268,6 +357,7 @@ function init(){
             el.style.height = dis + "px";
             el.style.left = c_x + "px";
             el.style.top =c_y+ "px";
+
             block.boundingBox.height = dis / scaleY;
             block.boundingBox.x = c_x / scaleX;
             block.boundingBox.y = c_y / scaleY;
@@ -300,6 +390,7 @@ function init(){
             el.style.width = dis + "px";
             el.style.left = c_x + "px";
             el.style.top =c_y+ "px";
+
             block.boundingBox.width = dis / scaleX;
             block.boundingBox.x = c_x / scaleX;
             block.boundingBox.y = c_y / scaleY;
@@ -332,6 +423,7 @@ function init(){
             el.style.width = dis + "px";
             el.style.left = c_x + "px";
             el.style.top =c_y+ "px";
+
             block.boundingBox.width = dis / scaleX;
             block.boundingBox.x = c_x / scaleX;
             block.boundingBox.y = c_y / scaleY;
@@ -542,6 +634,68 @@ function init(){
 }
 init();
 
+function write_to_history(block,page_num){
+    future = [];
+    history.push({block: JSON.parse(JSON.stringify(block)), page_num: page_num});
+    if (history.length > 16) history.shift();
+}
+
+function write_to_future(block_id,page_num,replace){
+    const page = pages[page_num];
+    const block = page.blocks.find(b=> b.id == block_id) || replace.block;
+    future.push({block: JSON.parse(JSON.stringify(block)), page_num: page_num,replace});
+}
+
+async function undo(){
+    if (!history[history.length-1]) return;
+    const {block, page_num} = history[history.length-1];
+    const page = pages[page_num];
+    write_to_future(block.id,page_num,history.pop());
+    const block_to_modify = page.blocks.find(b=> b.id == block.id);
+    const regen_redraw = block.covers?.length>0;
+    if (block_to_modify) {
+        if (block.boundingBox === null) {
+            page.blocks.splice(page.blocks.indexOf(block),1); 
+            set_text_edit_panel(true);
+        } else {
+            page.blocks[page.blocks.indexOf(block_to_modify)] = block;
+        }
+    } else {
+        page.blocks.push(block);
+    }
+    await generate_mask(page,regen_redraw);
+    generate_redraw(page,regen_redraw);
+    render_texts(page);
+    const el = document.querySelector(".text_region.active");
+    el.click();
+    el.click();
+}
+async function redo(){
+    if (!future[future.length-1]) return;
+    const {block, page_num,replace} = future[future.length-1];
+    const page = pages[page_num];
+    future.pop();
+    history.push(replace);
+    const block_to_modify = page.blocks.find(b=> b.id == block.id);
+    const regen_redraw = block.covers?.length>0;
+    if (block_to_modify) {
+        if (block.boundingBox === null) {
+            page.blocks.splice(page.blocks.indexOf(block),1); 
+            set_text_edit_panel(true);
+        } else {
+            page.blocks[page.blocks.indexOf(block_to_modify)] = block;
+        }
+    } else {
+        page.blocks.push(block);
+    }
+    await generate_mask(page,regen_redraw);
+    generate_redraw(page,regen_redraw);
+    render_texts(page);
+    const el = document.querySelector(".text_region.active");
+    el.click();
+    el.click();
+}
+
 function highlight_point(x,y,id){
     const highlight = document.querySelectorAll('.highlight')[id]
     highlight.style.left = x + "px";
@@ -672,7 +826,7 @@ function set_active_tab(num){
             }
         }
     });
-    if (!mask_tool0.style['border-width']) mask_tool0.style['border-width'] = 10 * (canvas2.offsetWidth/ canvas2.width || canvas4.offsetWidth/ canvas4.width) + "px";
+    if (!mask_tool0.style['border-width']) mask_tool0.style['border-width'] = 10 / 2 * (canvas2.offsetWidth/ canvas2.width || canvas4.offsetWidth/ canvas4.width) + "px";
 }
 
 async function read_file_as_data_url(file) {
@@ -841,6 +995,7 @@ async function highlight_texts(page){
     const ctx = canvas1.getContext('2d');
 
     for(const block of page.blocks){
+        if (block.is_user_box) continue;
         const { x, y, width, height } = block.boundingBox;  
         ctx.fillStyle = "transparent";
         ctx.strokeStyle = "yellow";
@@ -885,7 +1040,7 @@ function render_texts(page,forced = true,t_canvas = canvas2){
     const scaleX = canvas2.offsetWidth/ canvas2.width || canvas4.offsetWidth/ canvas4.width;
     const scaleY = canvas2.offsetHeight/ canvas2.height || canvas4.offsetHeight/ canvas4.height;
 
-    document.querySelectorAll('.text_region').forEach(e=>e.remove());
+    if (forced) document.querySelectorAll('.text_region').forEach(e=>e.remove());
 
     for (const block of page.blocks){
         const { x, y, width, height } = block.boundingBox;  
@@ -929,14 +1084,16 @@ function render_texts(page,forced = true,t_canvas = canvas2){
                 text_align: "center",
                 color: color,
                 border: border,
-                border_width: Math.round(font_size * .25)
+                border_width: Math.round(font_size * .25),
+                bold: false,
+                italic: false,
             }
         }
 
         // RENDER TEXT
         const font_size = block.style.font_size;
         const line_height = font_size + 5;
-        ctx.font = `${font_size}px ${block.style.font}`;
+        ctx.font = `${(block.style.italic)? 'italic' : 'normal'} normal ${(block.style.bold)? 'bold' : 'normal'} ${font_size}px ${block.style.font}`;
         ctx.textBaseline = 'top';
         ctx.fillStyle = block.style.color;
         ctx.lineWidth = block.style.border_width;
@@ -1009,6 +1166,9 @@ function render_texts(page,forced = true,t_canvas = canvas2){
             input10.value = Math.round(block.boundingBox.x*1000)/1000;
             input11.value = Math.round(block.boundingBox.y*1000)/1000;
 
+            input12.value = block.style.bold;
+            input13.value = block.style.italic;
+
             rotate_handle.center_x = el.x;
             rotate_handle.center_y = el.y;
             update_edit_handle(el.x,el.y,el.width,el.height,el.rotate);
@@ -1032,6 +1192,7 @@ function render_texts(page,forced = true,t_canvas = canvas2){
                 const block = pages[current_page].blocks.find(b=>b.id == el.block_id);
                 const scaleX = canvas2.offsetWidth/ canvas2.width || canvas4.offsetWidth/ canvas4.width;
                 const scaleY = canvas2.offsetHeight/ canvas2.height || canvas4.offsetHeight/ canvas4.height;
+                write_to_history(block,current_page);
                 block.boundingBox.x = el.x / scaleX;
                 block.boundingBox.y = el.y / scaleY;
                 render_texts(pages[current_page]);

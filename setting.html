@@ -6,17 +6,23 @@
     <title>Comic trans</title>
     <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
     <link rel="stylesheet" href="fonts.css">
-    
+    <link rel="stylesheet" href="theme_light.css" id="web_theme">
 </head>
 <body>
 <div id="root">
     <div class="header">
-        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" height="50px" style="position: absolute; left: 10px;"></a>cài đặt<a href="./app.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">trở lại</a><br></h1>
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" alt="logo" height="50px" style="position: absolute; left: 10px;"></a>cài đặt<a href="./app.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">trở lại</a><br></h1>
     </div>
     <div class="content">
         <label for="api-key">API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
         <br><span style="font-size: small;" id="key_info"></span>
         <br><span id="info" hidden>API key không đúng</span>
+        <hr>
+        <label for="input0">Chủ đề:</label>
+        <select id="input0" name="input0" onchange="update_setting('theme',this.value); web_theme.href = './theme_'+SETTING.theme+'.css';">
+            <option value="light">Sáng</option>
+            <option value="dark" >Tối</option>
+        </select>
         <hr>
         <label for="input1">Phông chữ mặc định:</label>
         <select id="input1" name="input1" onchange="update_setting('font',this.value)">
@@ -61,6 +67,8 @@
         margin: 0;
         font-family: cmf1, Arial, Helvetica, sans-serif;
         font-size: large;
+        color: var(--text);
+        background-color: var(--background);
     }
     .header {
         background-color: #2E5A53;
@@ -81,19 +89,23 @@
         max-width: 50%;
     }
     .ip1{
-        border: 2px solid #193834;
+        border: 2px solid var(--border-1);
         border-radius: 5px;
         width: 300px;
-        height: 25px;
-        padding-top: 7px;
+        height: 30px;
+        background-color: var(--soft-bg);
+        color: var(--text);
     }
     .bt1{
-        
-        border: 2px solid #193834;
+        color: var(--text);
+        border: 2px solid var(--border-1);
         border-radius: 5px;
-        background-color: #f6e3b3;
+        background-color: var(--button-bg-1);
         width: 30px;
         height: 30px;
+    }
+    .bt1:hover{
+        background-color: var(--button-bg-hover-1);
     }
     .footer{
         text-align: center;
@@ -107,13 +119,17 @@
     const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
     key.value = localStorage.API_KEY || '';
     const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
+    web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
 
+    input0.value = SETTING.theme || "light";
     input1.value = SETTING.font || "cmf1";
     input2.checked = (SETTING.ignore_sfx === undefined)? true : SETTING.ignore_sfx;
     input3.checked = (SETTING.merge_file === undefined)? true : SETTING.merge_file;
     input4.value = (SETTING.file_extension === undefined)? 'jpeg' : SETTING.file_extension;
 
     key_info.innerText = `Ngày hiệu lực: ${new Date(JSON.parse(localStorage.key_info).key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} | Ngày hết hạn: ${new Date(JSON.parse(localStorage.key_info).key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+
+
 
     function update_setting(key,value){
         SETTING[key] = value;
@@ -134,7 +150,7 @@
     async function validate(){
         info.hidden = false;
         info.innerText = 'Đang tải dữ liệu...';
-        info.style.color = '#193834';
+        info.style.color = 'var(--border-1)';
         const API_KEY = key.value;
         if (API_KEY === ''){
             info.hidden = true;

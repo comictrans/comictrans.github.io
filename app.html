@@ -7,6 +7,7 @@
     <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="theme_light.css" id="web_theme">
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script> 
     <script src="index.js" defer></script>
     
@@ -15,7 +16,7 @@
 <div id="root">
     <a href="#" id="scroll_up_btn">^</a>
     <div class="header">
-        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" height="50px" style="position: absolute; left: 10px;"></a>COMIC TRANS<a href="./setting.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">⚙️</a><br></h1>
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" alt="logo" height="50px" style="position: absolute; left: 10px;"></a>COMIC TRANS<a href="./setting.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">⚙️</a><br></h1>
     </div>
     <div class="upload">
         <div id="upload_zone">
@@ -50,10 +51,10 @@
                         <button id="remove_text_button" >Xóa ô chữ này</button>
                     </div>
                     <div class="section" hidden>
-                        <textarea id="input0" placeholder="Nhập chữ vào đây" onkeyup="pages[current_page].blocks.find(b=>b.id == selected_text).translation = this.value; render_texts(pages[current_page]); [...document.querySelectorAll('.text_region')].find(e=>e.block_id==selected_text).scrollIntoViewIfNeeded()"></textarea>
+                        <textarea id="input0" placeholder="Nhập chữ vào đây" onkeyup="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.translation = this.value; render_texts(pages[current_page]); [...document.querySelectorAll('.text_region')].find(e=>e.block_id==selected_text).scrollIntoViewIfNeeded()"></textarea>
                     </div>
                     <div class="section" hidden>
-                        <select id="input1" name="input1" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.font = this.value; render_texts(pages[current_page])">
+                        <select id="input1" name="input1" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font = this.value; render_texts(pages[current_page])">
                             <option value="Arial"style="font-family:arial">Arial</option>
                             <option value="cmf2" style="font-family:cmf2">Avegaeance iCiel</option>
                             <option value="cmf3" style="font-family:cmf3">BlahBlahUC iCiel</option>
@@ -73,39 +74,37 @@
                             <option value="cmf14" style="font-family:cmf14">WebLettererP iCiel</option>
                             <option value="cmf15" style="font-family:cmf15">Zoinks iCiel</option>
                         </select>
-                        <input id="input2" name="input2" type="number" min="1" value="16" style="width: calc(100% - 188px - 0.8px - 0.8px - 5px - 0.8px - 0.8px - 5px);" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.font_size = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input2" name="input2" type="number" min="1" value="16" style="width: calc(100% - 188px - 0.8px - 0.8px - 5px - 0.8px - 0.8px - 5px);" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font_size = Number(this.value); render_texts(pages[current_page])"><br>
+                        <button id="input12" value="false" class="toggle-btn" onclick="this.value = (this.value == 'true')? false : true; const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.bold = (this.value == 'true')? true : false; render_texts(pages[current_page])"><b>Bold</b></button>&nbsp;<button id="input13" value="false" class="toggle-btn" onclick="this.value = (this.value == 'true')? false : true; const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.italic = (this.value == 'true')? true : false;  render_texts(pages[current_page])"><i>Italic</i></button>
                         <hr>
                         <span>Chữ:</span>
-                        <input id="input3" name="input3" type="color" value="#000000" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.color = this.value; render_texts(pages[current_page])">
-                        <select id="input4" name="input4" style="font-family: cmf1;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.text_align = this.value; render_texts(pages[current_page])">
+                        <input id="input3" name="input3" type="color" value="#000000" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.color = this.value; render_texts(pages[current_page])">
+                        <select id="input4" name="input4" style="font-family: cmf1;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.text_align = this.value; render_texts(pages[current_page])">
                             <option value="left" >Căn trái</option>
                             <option value="center">Căn giữa</option>
                             <option value="right">Căn Phải</option>
                         </select>
                         <hr>
                         <span>Viền:</span>
-                        <input id="input5" name="input5" type="color" value="#000000" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.border = this.value; render_texts(pages[current_page])">
-                        <input id="input6" name="input6" type="number" min="0" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).style.border_width = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input5" name="input5" type="color" value="#000000" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.border = this.value; render_texts(pages[current_page])">
+                        <input id="input6" name="input6" type="number" min="0" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.border_width = Number(this.value); render_texts(pages[current_page])">
                     </div>
                     <div class="section" hidden>
                         <span>Xoay:</span>
-                        <input id="input7" name="input7" type="number" value="0" style="width: 70.8px;" onchange="this.value = (Number(this.value) + 360) % 360;pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.rotate = Number(this.value) * Math.PI/180; render_texts(pages[current_page])">
+                        <input id="input7" name="input7" type="number" value="0" style="width: 70.8px;" onchange="this.value = (Number(this.value) + 360) % 360;const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.rotate = Number(this.value) * Math.PI/180; render_texts(pages[current_page])">
                         <hr>
                         <span>Rộng:</span>
-                        <input id="input8" name="input8" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.width = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input8" name="input8" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.width = Number(this.value); render_texts(pages[current_page])">
                         <span>Cao:</span>
-                        <input id="input9" name="input9" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.height = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input9" name="input9" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.height = Number(this.value); render_texts(pages[current_page])">
                         <hr>
                         <span>X:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        <input id="input10" name="input10" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.x = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input10" name="input10" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.x = Number(this.value); render_texts(pages[current_page])">
                         <span>Y:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        <input id="input11" name="input11" type="number" value="0" style="width: 70.8px;" onchange="pages[current_page].blocks.find(b=>b.id == selected_text).boundingBox.y = Number(this.value); render_texts(pages[current_page])">
+                        <input id="input11" name="input11" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.y = Number(this.value); render_texts(pages[current_page])">
                     </div>
                 </div>
                 <div class="right-wrapper" >
-                    <!-- <div class="highlight"></div>
-                    <div class="highlight"></div>
-                    <div class="highlight" style="background-color: yellow;"></div> -->
                     <svg id="rotate_handle" fill="black" ondragstart="return false;" height="200px" width="200px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-25.72 -25.72 265.81 265.81" xml:space="preserve"><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#00f500" stroke-width="42.8734"> <path transform="translate(-50%,-50%) rotate(270)" d="M202.403,95.22c0,46.312-33.237,85.002-77.109,93.484v25.663l-69.76-40l69.76-40v23.494 c27.176-7.87,47.109-32.964,47.109-62.642c0-35.962-29.258-65.22-65.22-65.22s-65.22,29.258-65.22,65.22 c0,9.686,2.068,19.001,6.148,27.688l-27.154,12.754c-5.968-12.707-8.994-26.313-8.994-40.441C11.964,42.716,54.68,0,107.184,0 S202.403,42.716,202.403,95.22z"></path> </g><g id="SVGRepo_iconCarrier" > <path transform="translate(-50%,-50%) rotate(270)" d="M202.403,95.22c0,46.312-33.237,85.002-77.109,93.484v25.663l-69.76-40l69.76-40v23.494 c27.176-7.87,47.109-32.964,47.109-62.642c0-35.962-29.258-65.22-65.22-65.22s-65.22,29.258-65.22,65.22 c0,9.686,2.068,19.001,6.148,27.688l-27.154,12.754c-5.968-12.707-8.994-26.313-8.994-40.441C11.964,42.716,54.68,0,107.184,0 S202.403,42.716,202.403,95.22z"></path> </g></svg>
                     <div id="crop_handle_1" class="crop_handle"></div>
                     <div id="crop_handle_2" class="crop_handle"></div>
@@ -115,12 +114,12 @@
                 </div>
             </div>
             <div class="tabs-content-child" id="tab2">
-                <div class="left-wrapper">
+                <div class="left-wrapper" ondragstart="return false;">
                     <img id="img2">
                     <canvas id="canvas3" ></canvas>
                 </div>
                 <div class="mid-wrapper">
-                    <div class="section" style="height: 100px; display: grid;">
+                    <div class="section" style="height: 50px; display: grid;">
                         <div id="mask_tool0"></div>
                     </div>
                     <div class="section">
@@ -128,8 +127,8 @@
                     </div>
                     <div class="section">
                         <span>Độ lớn:</span>
-                        <input type="number" id="mask_tool3" name="penSize" min="1" max="50" value="10" onchange="mask_tool4.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)* canvas4.offsetWidth/ canvas4.width + 'px'">
-                        <input type="range" id="mask_tool4" name="penSize" min="1" max="50" value="10" onchange="mask_tool3.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)* canvas4.offsetWidth/ canvas4.width + 'px'">
+                        <input type="number" id="mask_tool3" name="penSize" min="1" max="50" value="10" onchange="mask_tool4.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)/2 * canvas4.offsetWidth/ canvas4.width + 'px'">
+                        <input type="range" id="mask_tool4" name="penSize" min="1" max="50" value="10" onchange="mask_tool3.value=this.value; pen_size = this.value; mask_tool0.style['border-width'] = Number(this.value)/2 * canvas4.offsetWidth/ canvas4.width + 'px'">
                     </div>
                 </div>
                 <div class="right-wrapper">
