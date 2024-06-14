@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="theme_light.css" id="web_theme">
+    <script src="./server.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script> 
     <script src="index.js" defer></script>
     
@@ -23,6 +24,7 @@
             <input type="file" id="file_upload" name="file_upload" accept="image/*"  multiple hidden>
             <label for="file_upload" >Kéo thả ảnh hoặc bấm vào đây để tải ảnh lên</label>
         </div>
+        <span style="font-size: small;">Hoặc bấm vào <a href="./url_import.html" style="color: blue;">đây</a> để sử dụng công cụ lấy ảnh từ Link</span><br>
         <span id="upload_progress"></span>&nbsp;<button id="download_all_btn" hidden disabled>Tải xuống tất cả</button><progress id="upload_progress_bar" value="0" max="0" style="float: right; margin: 10px;" hidden></progress>
     </div>
     <hr>
@@ -54,27 +56,29 @@
                         <textarea id="input0" placeholder="Nhập chữ vào đây" onkeyup="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.translation = this.value; render_texts(pages[current_page]); [...document.querySelectorAll('.text_region')].find(e=>e.block_id==selected_text).scrollIntoViewIfNeeded()"></textarea>
                     </div>
                     <div class="section" hidden>
-                        <select id="input1" name="input1" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font = this.value; render_texts(pages[current_page])">
-                            <option value="Arial"style="font-family:arial">Arial</option>
-                            <option value="cmf2" style="font-family:cmf2">Avegaeance iCiel</option>
-                            <option value="cmf3" style="font-family:cmf3">BlahBlahUC iCiel</option>
-                            <option value="cmf4" style="font-family:cmf4">Blambot Classic iCiel</option>
-                            <option value="cmf5" style="font-family:cmf5">CollectEmAll iCiel</option>
-                            <option value="cmf6" style="font-family:cmf6">Frank Bellamy iCiel</option>
-                            <option value="cmf7" style="font-family:cmf7">Hand Of Sean Pro iCiel</option>
-                            <option value="cmf8" style="font-family:cmf8">Heroid iCiel</option>
-                            <option value="cmf9" style="font-family:cmf9">HometownHero iCiel</option>
-                            <option value="cmf10" style="font-family:cmf10">Hundred Watt iCiel</option>
-                            <option value="cmf11" style="font-family:cmf11">OutOfLine iCiel</option>
-                            <option value="cmf12" style="font-family:cmf12">PiekosPro iCiel</option>
-                            <option value="cmf1" style="font-family:cmf1" selected>ReadyforAnything TB</option>
-                            <option value="cmf13" style="font-family:cmf13">SkippySharp iCiel</option>
-                            <option value="cmf16" style="font-family:cmf16">SpaghettiWesternSans iCiel</option>
-                            <option value="'Times New Roman'" style="font-family:'Times New Roman'">Times New Roman</option>
-                            <option value="cmf14" style="font-family:cmf14">WebLettererP iCiel</option>
-                            <option value="cmf15" style="font-family:cmf15">Zoinks iCiel</option>
-                        </select>
-                        <input id="input2" name="input2" type="number" min="1" value="16" style="width: calc(100% - 188px - 0.8px - 0.8px - 5px - 0.8px - 0.8px - 5px);" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font_size = Number(this.value); render_texts(pages[current_page])"><br>
+                        <div class="flex-h">
+                            <select id="input1" name="input1" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font = this.value; render_texts(pages[current_page])" style="width: 80%;">
+                                <option value="Arial"style="font-family:arial">Arial</option>
+                                <option value="cmf2" style="font-family:cmf2">Avegaeance iCiel</option>
+                                <option value="cmf3" style="font-family:cmf3">BlahBlahUC iCiel</option>
+                                <option value="cmf4" style="font-family:cmf4">Blambot Classic iCiel</option>
+                                <option value="cmf5" style="font-family:cmf5">CollectEmAll iCiel</option>
+                                <option value="cmf6" style="font-family:cmf6">Frank Bellamy iCiel</option>
+                                <option value="cmf7" style="font-family:cmf7">Hand Of Sean Pro iCiel</option>
+                                <option value="cmf8" style="font-family:cmf8">Heroid iCiel</option>
+                                <option value="cmf9" style="font-family:cmf9">HometownHero iCiel</option>
+                                <option value="cmf10" style="font-family:cmf10">Hundred Watt iCiel</option>
+                                <option value="cmf11" style="font-family:cmf11">OutOfLine iCiel</option>
+                                <option value="cmf12" style="font-family:cmf12">PiekosPro iCiel</option>
+                                <option value="cmf1" style="font-family:cmf1" selected>ReadyforAnything TB</option>
+                                <option value="cmf13" style="font-family:cmf13">SkippySharp iCiel</option>
+                                <option value="cmf16" style="font-family:cmf16">SpaghettiWesternSans iCiel</option>
+                                <option value="'Times New Roman'" style="font-family:'Times New Roman'">Times New Roman</option>
+                                <option value="cmf14" style="font-family:cmf14">WebLettererP iCiel</option>
+                                <option value="cmf15" style="font-family:cmf15">Zoinks iCiel</option>
+                            </select>
+                            <input id="input2" name="input2" type="number" min="1" value="16" style="width: 20%;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.font_size = Number(this.value); render_texts(pages[current_page])"><br>
+                        </div>
                         <button id="input12" value="false" class="toggle-btn" onclick="this.value = (this.value == 'true')? false : true; const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.bold = (this.value == 'true')? true : false; render_texts(pages[current_page])"><b>Bold</b></button>&nbsp;<button id="input13" value="false" class="toggle-btn" onclick="this.value = (this.value == 'true')? false : true; const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.style.italic = (this.value == 'true')? true : false;  render_texts(pages[current_page])"><i>Italic</i></button>
                         <hr>
                         <span>Chữ:</span>
@@ -100,7 +104,7 @@
                         <hr>
                         <span>X:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                         <input id="input10" name="input10" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.x = Number(this.value); render_texts(pages[current_page])">
-                        <span>Y:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        <span>Y:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                         <input id="input11" name="input11" type="number" value="0" style="width: 70.8px;" onchange="const block = pages[current_page].blocks.find(b=>b.id == selected_text); write_to_history(block,current_page); block.boundingBox.y = Number(this.value); render_texts(pages[current_page])">
                     </div>
                 </div>

@@ -7,6 +7,7 @@
     <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="theme_light.css" id="web_theme">
+    <script src="./server.js"></script>
     
 </head>
 <body>
@@ -70,7 +71,6 @@
 </style>
 
 <script>
-    const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec'
     const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
     web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
 

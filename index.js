@@ -1,6 +1,5 @@
 let pages = [];
 let current_page = 0;
-const API_SER = 'https://script.google.com/macros/s/AKfycbz02LImfManoeaEdWunIm6pAb66iO-0m78z-NU24DVOFn6cwjbfuX0AakQ_Wo9gdi_l/exec';
 const API_KEY = localStorage.API_KEY;
 const SETTING = {...((localStorage.setting) ? JSON.parse(localStorage.setting) : {}),...{
     file_extension: "jpeg",
@@ -50,6 +49,8 @@ function init(){
         }
     }
     _load_font();
+
+
     // CANVAS SMOOTHING
     canvas1.getContext('2d').imageSmoothingEnabled = false;
     canvas2.getContext('2d').imageSmoothingEnabled = false;
@@ -520,8 +521,8 @@ function init(){
 
     // SETUP UPLOAD
     file_upload.addEventListener('change', async ()=>{
-        const files = [...file_upload.files].filter(e=>e.type.split('/')[0] === 'image');
-        if (!files[0]) return;
+        const files = (file_upload.is_imported)? file_upload.import : [...file_upload.files].filter(e=>e.type.split('/')[0] === 'image');
+        if (!files) return;
         // console.log(files)
         if (pages.length > 0) {
             const confirmation = confirm('Bạn có chắc muốn thay thế tất cả ảnh hiện tại?');
@@ -555,7 +556,7 @@ function init(){
 
         // PROCESS IMAGE
         upload_progress.innerText = 'Đang gộp các ảnh...';
-        const images = await merge_files(files);
+        const images = await merge_files(files,file_upload.is_imported);
         pages = [];
         let progress = 0;
         upload_progress_bar.max = images.length;
@@ -630,7 +631,24 @@ function init(){
 
         upload_busy = false;
         download_all_btn.disabled = false;
-    })
+    });
+
+    // IMPORT
+    const url = new URLSearchParams(location.search);
+    if (url.get('import') === 'true'){
+        if (!localStorage.import) return;
+        const images = JSON.parse(localStorage.import);
+        if (images.length < 1) return;
+        file_upload.is_imported = true;
+        upload_progress.innerText = 'Đang tải ảnh... Có thể mất vài phút';
+        file_upload.disabled = true;
+        img2base64( images).then(urls=>{
+            localStorage.removeItem('import');
+            file_upload.import = urls.filter(e=>e) ;
+            file_upload.disabled = false;
+            file_upload.dispatchEvent(new Event('change'));
+        })
+    }
 }
 init();
 
@@ -702,7 +720,7 @@ function highlight_point(x,y,id){
     highlight.style.top = y+ "px";
 }
 
-async function merge_files(files){
+async function merge_files(files,is_imported){
     const max_height = 9000;
     const canvas = canvas1;
     const ctx = canvas.getContext('2d');
@@ -711,8 +729,10 @@ async function merge_files(files){
     let current_width = 0;
     let pending = [];
     for (const file of files){
-        const img = new Image();
-        img.src = await read_file_as_data_url(file);
+        const img = document.createElement('img');
+        // console.log(file)
+        // img.crossOrigin="anonymous";
+        img.src = (is_imported)? file : await read_file_as_data_url(file);
         await new Promise((resolve) => img.onload = resolve);
         if (current_height + img.naturalHeight <= max_height && img.naturalWidth == current_width && (SETTING.merge_file)){
             current_height += img.naturalHeight;
@@ -743,7 +763,7 @@ async function merge_files(files){
         y += p.naturalHeight
     }
     images.push(canvas.toDataURL());
-    // console.log(images)
+    // console.log(files)
     return images;
 }
 
@@ -972,12 +992,56 @@ function generate_redraw(page,forced = false,r_canvas = canvas4,img = img2){
                     lines[lines.length-1].height ++;
                 } else {
                     in_line = true;
-                    lines.push({x:x,y:y,width:1,height:1,colors:[get_pixel_data(x-1,y,pixel_data,canvas_width)]});
+                    lines.push({x:x,y:y,width:1,height:1,colors:[get_pixel_data(x,y-1,pixel_data,canvas_width)]});
                 }
             }
         }
+        if (in_line) {
+            in_line = false;
+            lines[lines.length-1].colors.push(get_pixel_data(x,y,pixel_data,canvas_width));
+        }
     }
-    for (const line of lines){
+    for (const line of lines){      
+        // HANDEL LINE THAT IS JUST A BIT OVER LENGTH      
+        // if (!line.colors[1]) console.log(line)
+        if (
+            line.height > 10 &&
+            (
+                ( (line.colors[1][0] > 230 && line.colors[1][1] > 230 && line.colors[1][2] > 230) && (line.colors[0][0] <= 230 && line.colors[0][1] <= 230 && line.colors[0][2] <= 230) ) ||
+                ( (line.colors[0][0] > 230 && line.colors[0][1] > 230 && line.colors[0][2] > 230) && (line.colors[1][0] <= 230 && line.colors[1][1] <= 230 && line.colors[1][2] <= 230) )
+            ) // TWO TIPS OF THE LINE ARE NOT WHITE AND WHITE
+        ) {
+            if (line.colors[1][0] > 230) {
+                let white_count = 0;
+                for (let ox = -5; ox <= 5; ox++){
+                    for (let oy = -10; oy <= 0; oy++){
+                        const [r,g,b] = get_pixel_data(line.x+ox,line.y+oy,pixel_data,canvas_width);
+                        if ((r > 230 && g > 230 && b > 230)) white_count ++;
+                    }
+                }
+                // console.log(white_count)
+                if (white_count/121 > .3) {
+                    line.colors[0][0] = line.colors[1][0];
+                    line.colors[0][1] = line.colors[1][1];
+                    line.colors[0][2] = line.colors[1][2];
+                }
+            } else {
+                let white_count = 0;
+                for (let ox = -5; ox <= 5; ox++){
+                    for (let oy = 0; oy <= 10; oy++){
+                        const [r,g,b] = get_pixel_data(line.x+ox,line.y+line.height+oy,pixel_data,canvas_width);
+                        if ((r > 230 && g > 230 && b > 230)) white_count ++;
+                    }
+                }
+                if (white_count/121 > .3) {
+                    line.colors[1][0] = line.colors[0][0];
+                    line.colors[1][1] = line.colors[0][1];
+                    line.colors[1][2] = line.colors[0][2];
+                }
+            }
+        }
+
+        // REDRAW MISSING PIXEL
         const gradient = ctx.createLinearGradient(line.x,line.y,line.x+line.width-1,line.y+line.height-1);
         gradient.addColorStop(0,`rgb(${line.colors[0][0]},${line.colors[0][1]},${line.colors[0][2]})`);
         gradient.addColorStop(1,`rgb(${line.colors[1][0]},${line.colors[1][1]},${line.colors[1][2]})`);
@@ -1274,7 +1338,7 @@ function update_edit_handle(x,y,width,height,rotate){
 
 function set_text_edit_panel(hidden){
     input0.parentElement.hidden = hidden;
-    input1.parentElement.hidden = hidden;
+    input1.parentElement.parentElement.hidden = hidden;
     input7.parentElement.hidden = hidden;
     remove_text_button.parentElement.hidden = hidden;
     rotate_handle.hidden = hidden;
@@ -1380,6 +1444,40 @@ async function translate(blocks){
             }
             // console.log(data);
             return data.filter(b=>b.text!=b.translation);
+        } catch (error) {
+            console.log('Connection timed out');
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+    return null;
+}
+
+async function img2base64(urls){
+    const url = API_SER + '?action=img2base64&key='+API_KEY;
+    for (let t = 0; t < 10; t ++){
+        const controller = new AbortController();
+        const timeout = setTimeout(()=>controller.abort("Connection timed out"),60000);
+        try {
+            const res = await fetch(url,{
+                redirect: "follow",
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                    },
+                body: JSON.stringify({
+                    params: urls
+                })
+            });
+            const data = await res.json();
+            if (data.error == "Invalid API key") {
+                alert('API key đã hết hạn!');
+                window.location.href = './index.html';
+            } else if (data.error){
+                return null;
+            }
+            // console.log(data);
+            return data;
         } catch (error) {
             console.log('Connection timed out');
         } finally {

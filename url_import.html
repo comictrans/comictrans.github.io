@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic trans</title>
+    <link rel="shortcut icon" href="./images/small.jfif" type="image/x-icon">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="theme_light.css" id="web_theme">
+    <script src="./server.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script> 
+</head>
+<body>
+<div id="root">
+    <a href="#" id="scroll_up_btn">^</a>
+    <div class="header">
+        <h1 class="cmf1"><a href="./index.html"><img src="./images/small.jfif" alt="logo" height="50px" style="position: absolute; left: 10px;"></a>Công cụ lấy ảnh<a href="./app.html" style="right: 10px; text-decoration: none; color: white; position: absolute;">trở lại</a><br></h1>
+    </div>
+    <div class="content">
+        <form id="frm">
+            <label for="url">Nhập URL: </label><input id="url" name="url" type="text" class="ip1" required>&nbsp;<input class="bt1" id="load_btn" type="submit" value="Load">
+        </form>
+        <hr>
+        <button class="bt1" style="font-family: cmf1, Arial, Helvetica, sans-serif;" id="download_btn" hidden>Tải xuống tất cả</button>&nbsp;<button class="bt1" style="font-family: cmf1, Arial, Helvetica, sans-serif;" id="use_btn" hidden>Sử dụng ngay</button>
+        <span id="download_stage" hidden><br>Đang nén files...</span>
+        <div id="image_area">
+            
+        </div>
+    </div>
+    <div class="footer">
+        <p>Comic trans - dịch truyện dễ dàng</p>
+    </div>
+</div>
+</body>
+</html>
+
+<style>
+    body {
+        margin: 0;
+        font-family: cmf1, Arial, Helvetica, sans-serif;
+        font-size: large;
+        color: var(--text);
+        background-color: var(--background);
+    }
+    .header {
+        background-color: #2E5A53;
+        color: white;
+        margin: 0;
+        text-align: center; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    #scroll_up_btn{
+        position: fixed;
+        bottom: 10px;
+        right: 20px;
+        font-size: xx-large;
+        width: 50px;
+        text-decoration: none;
+        color: black;
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 3px;
+        text-align: center;
+        z-index: 9999 !important;
+    }
+    #scroll_up_btn:hover{
+        background-color: antiquewhite;
+    }
+    h1 {
+        margin: 0;
+    }
+    .content{
+        text-align: center;
+    }
+    .i1 {
+        height: 100vh;
+        max-width: 50%;
+    }
+    .ip1{
+        border: 2px solid var(--border-1);
+        border-radius: 5px;
+        width: 40vw;
+        height: 30px;
+        background-color: var(--soft-bg);
+        color: var(--text);
+    }
+    .bt1{
+        color: var(--text);
+        border: 2px solid var(--border-1);
+        border-radius: 5px;
+        background-color: var(--button-bg-1);
+        width: fit-content;
+        height: 30px;
+    }
+    .bt1:hover{
+        background-color: var(--button-bg-hover-1);
+    }
+    .bt1:disabled{
+        cursor:wait;
+        background-color: var(--soft-bg);
+    }
+    .footer{
+        text-align: center;
+        font-size: smaller;
+    }.content{
+        padding: 10px;
+    }
+    #image_area{
+        padding-left: 15%;
+        padding-right: 15%;
+        display: grid;
+        grid-template-columns: auto auto auto auto;
+    }
+    .image{
+        background-color: var(--section);
+        border-radius: 10px;
+        padding: 10px;
+        text-align: right;
+        margin: 5px;
+    }
+    .image>img{
+        width: 100%;
+    }
+    label{
+        user-select: none;
+        cursor: pointer;
+    }
+</style>
+
+<script defer>
+    const API_KEY = localStorage.API_KEY;
+    const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
+    web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
+    let imgs;
+
+    frm.addEventListener('submit',async e=>{
+        e.preventDefault();
+        load_btn.disabled = true;
+        image_area.innerHTML = 'Đang tải...';
+        use_btn.hidden = true;
+        download_btn.hidden = true;
+
+        imgs = await url2img(url.value);
+        image_area.innerHTML = '';
+        if (!imgs || imgs.length < 1) image_area.innerHTML = 'Không tìm thấy ảnh';
+        else {
+            for (const img of imgs){
+                const div = document.createElement('div');
+                div.classList.add('image');
+                div.img_id = img.id;
+                div.innerHTML = `<label for="checkbox${img.id}">Sử dụng ảnh này: </label><input id="checkbox${img.id}" type="checkbox" checked><hr><img src="${img.url}" ${(img.alt) ? 'alt="'+img.alt+'"' : ''}">`
+                image_area.appendChild(div);
+            }
+            use_btn.hidden = false;
+            download_btn.hidden = false;
+        }
+        // console.log(imgs);
+        load_btn.disabled = false;
+    });
+
+    use_btn.addEventListener('click', async ()=>{
+        use_btn.disabled = true;
+        const urls = [...document.querySelectorAll('input[type="checkbox"]')].filter(e=>e.checked).map(e=>e.nextElementSibling.nextElementSibling.src);
+
+        localStorage.import = JSON.stringify(urls);
+        location.href = './app.html?import=true';
+    });
+    download_btn.addEventListener('click', async ()=>{
+        download_btn.disabled = true;
+        download_stage.hidden = false;
+        const dataUrls = await img2base64([...document.querySelectorAll('input[type="checkbox"]')].filter(e=>e.checked).map(e=>e.nextElementSibling.nextElementSibling.src));
+        const zip = new JSZip();
+        for (let i = 0; i < dataUrls.length; i++) {
+            const dataUrl = dataUrls[i];
+            const base64Data = dataUrl.split(',')[1];
+            const mimeType = dataUrl.split(';')[0].split(':')[1];
+            const binaryData = atob(base64Data);
+            const arrayBuffer = new ArrayBuffer(binaryData.length);
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            for (let j = 0; j < binaryData.length; j++) {
+                uint8Array[j] = binaryData.charCodeAt(j);
+            }
+
+            const blob = new Blob([uint8Array], { type: mimeType });
+            zip.file(`image${i + 1}.${mimeType.split('/')[1]}`, blob);
+        }
+        const content = await zip.generateAsync({type: "blob"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = 'comictrans.zip';
+        link.click();
+        download_btn.disabled = false;
+        download_stage.hidden = true;
+        
+    })
+
+
+    async function url2img(url_to_fetch){
+        if (!URL.canParse(url_to_fetch)) return null;
+        const url = API_SER + '?action=url2img&key='+API_KEY;
+        for (let t = 0; t < 10; t ++){
+            const controller = new AbortController();
+            const timeout = setTimeout(()=>controller.abort("Connection timed out"),20000);
+            try {
+                const res = await fetch(url,{
+                    redirect: "follow",
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                        },
+                    body: JSON.stringify({
+                        params: url_to_fetch
+                    })
+                });
+                const data = await res.json();
+                if (data.error == "Invalid API key") {
+                    alert('API key đã hết hạn!');
+                    window.location.href = './index.html';
+                } else if (data.error){
+                    return null;
+                }
+                const urls = [...data].map(e=>e.url);
+                // console.log(data);
+                return data.filter((e,i)=>urls.indexOf(e.url) == i).map((e,i)=>{return {
+                    url: new URL(e.url,url_to_fetch).href,
+                    alt: e.alt,
+                    id: i
+                }})
+            } catch (error) {
+                console.log('Connection timed out');
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+        return null;
+    }
+
+    async function img2base64(urls){
+        const url = API_SER + '?action=img2base64&key='+API_KEY;
+        for (let t = 0; t < 10; t ++){
+            const controller = new AbortController();
+            const timeout = setTimeout(()=>controller.abort("Connection timed out"),60000);
+            try {
+                const res = await fetch(url,{
+                    redirect: "follow",
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                        },
+                    body: JSON.stringify({
+                        params: urls
+                    })
+                });
+                const data = await res.json();
+                if (data.error == "Invalid API key") {
+                    alert('API key đã hết hạn!');
+                    window.location.href = './index.html';
+                } else if (data.error){
+                    return null;
+                }
+                return data;
+            } catch (error) {
+                console.log('Connection timed out');
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+        return null;
+    }
+</script>
