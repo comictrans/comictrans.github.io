@@ -141,13 +141,21 @@
     setInterval(()=>{
         if (pending_fetch) {
             pending_fetch = false;
-            validate();
+            create_token();
         }
     },1000);
+    let last_key = key.value;
+    let last_success = key.value;
     key.addEventListener('keyup',()=>{
+        if (last_key == key.value) return;
+        if (last_success == key.value) {
+            info.hidden = true;
+            return;
+        };
+        last_key = key.value;
         pending_fetch = true;
     })
-    async function validate(){
+    async function create_token(){
         info.hidden = false;
         info.innerText = 'Đang tải dữ liệu...';
         info.style.color = 'var(--border-1)';
@@ -156,25 +164,43 @@
             info.hidden = true;
             return;
         }
-        const url = API_SER + '?action=test&key='+API_KEY
+        const url = API_SER + '?action=create_token'
         const res = await fetch(url,{
             redirect: "follow",
             method: "POST",
             headers: {
                 "Content-Type": "text/plain;charset=utf-8",
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({
+                params: API_KEY
+            })
         });
         const data = await res.json();
-        if (!data.success) {
+        if (data.error) {
             info.style.color = 'red';
-            info.innerText = 'API key không đúng!';
+            switch (data.error_code){
+                case 100:
+                    info.innerText = 'API key không đúng!';
+                    break;
+                case 101:
+                    info.innerText = 'API key đã hết hạn hoặc không khả dụng!';
+                    break;
+                case 102:
+                    info.innerText = 'Số thiết bị sử dụng đã đạt tối đa!';
+                    break;
+                default:
+                    info.innerText = 'API key không đúng!';
+                    break;
+            }
         } else {
             localStorage.API_KEY = API_KEY;
-            localStorage.key_info = JSON.stringify({key_start_date: data.key_start_date, key_expire_date: data.key_expire_date});
+            // console.log(data)
+            localStorage.key_info = JSON.stringify({key_start_date: data.key_info.iat, key_expire_date: data.key_info.exp});
+            localStorage.jwt = data.jwt;
+            localStorage.jwt_exp = new Date().setHours(23, 59, 59, 999);
             info.innerText = 'Đã xác thực API key';
             info.style.color = '#00ff00';
-            key_info.innerText = `Ngày hiệu lực: ${new Date(JSON.parse(localStorage.key_info).key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} | Ngày hết hạn: ${new Date(JSON.parse(localStorage.key_info).key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+            last_success = API_KEY;
         }
     }
     function toggle_password() {

@@ -75,13 +75,13 @@
     web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
 
     async function fetch_keys(){
-        const res = await fetch(API_SER+"?q=free_keys",{
+        const res = await fetch(API_SER+"?action=free_keys",{
             redirect: "follow",
             method: "POST",
             headers: {
                 "Content-Type": "text/plain;charset=utf-8",
             },
-            body:''
+            body: JSON.stringify({})
         });
         const data = await res.json();
         content.innerHTML = '';
@@ -89,7 +89,7 @@
         for (const key of data){
             content.innerHTML += `
                 <div class="key">
-                    <span>KEY: <b>${key.key_name}</b></span>&nbsp;|&nbsp;<span>Ngày hiệu lực: <b>${new Date(key.key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b>, Ngày hết hạn: <b>${new Date(key.key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b></span>&nbsp;|&nbsp;<input value="${key.key}" readonly >&nbsp;|&nbsp;<div><button onclick="localStorage.API_KEY = '${key.key}'; location = './index.html'">Sử dụng key này</button>&nbsp;<button onclick="navigator.clipboard.writeText('${key.key}')">Sao chép key</button></div>
+                    <span>KEY: <b>${key.key_name}</b></span>&nbsp;|&nbsp;<span>Ngày hiệu lực: <b>${new Date(key.key_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b>, Ngày hết hạn: <b>${new Date(key.key_expire_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b></span>&nbsp;|&nbsp;<input value="${key.key}" readonly >&nbsp;|&nbsp;<div><button onclick="if(localStorage.API_KEY !== '${key.key}') localStorage.removeItem('jwt'); localStorage.API_KEY = '${key.key}'; location = './index.html'">Sử dụng key này</button>&nbsp;<button onclick="navigator.clipboard.writeText('${key.key}')">Sao chép key</button></div>
                 </div>
             `;
         }

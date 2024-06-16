@@ -17,7 +17,7 @@
         <span style="font-size: small;">Chưa có API key? Mua ngay tại fanpage <b><a href="https://www.facebook.com/profile.php?id=61560766713838" target="_blank">Comic Trans</a></b>, hoặc bấm vào <a href="./free_keys.html">đây</a> để xem các key <b>miễn phí</b></span><br>
         <label for="api-key">Nhập API key:</label>&nbsp;<input type="password" name="api-key" id="key" class="ip1">&nbsp;<button onclick="toggle_password()" class="bt1">👁</button>
         <br>
-        <span id="info">API key không đúng</span>
+        <span id="info"></span>
         <p></p>
         <a id="start_button" href="./app.html" hidden>KHỞI CHẠY</a>
     </div>
@@ -103,26 +103,34 @@
         const SETTING = (localStorage.setting) ? JSON.parse(localStorage.setting) : {};
         web_theme.href = './theme_'+(SETTING.theme || 'light')+'.css';
         key.value = localStorage.API_KEY || '';
-        const key_info = (localStorage.key_info) ? JSON.parse(localStorage.key_info) : null;
-        if (key_info && Date.now() > Date.parse(key_info.key_start_date) && Date.now() < Date.parse(key_info.key_expire_date)) {
+        const jwt_exp = localStorage.jwt_exp;
+        if (localStorage.jwt && jwt_exp && Date.now() < jwt_exp) {
             start_button.hidden = false;
+        } else {
+            create_token();
         }
-
-
-        validate();
 
         let pending_fetch = false;
 
         setInterval(()=>{
             if (pending_fetch) {
                 pending_fetch = false;
-                validate();
+                create_token();
             }
         },1000);
+        let last_key = key.value;
+        let last_success = key.value;
         key.addEventListener('keyup',()=>{
+            if (last_key == key.value) return;
+            if (last_success == key.value) {
+                info.hidden = true;
+                start_button.hidden = false;
+                return;
+            };
+            last_key = key.value;
             pending_fetch = true;
         })
-        async function validate(){
+        async function create_token(){
             info.hidden = false;
             info.innerText = 'Đang tải dữ liệu...';
             info.style.color = 'var(--border-1)';
@@ -131,28 +139,45 @@
                 info.hidden = true;
                 return;
             }
-            const url = API_SER + '?action=test&key='+API_KEY
+            const url = API_SER + '?action=create_token'
             const res = await fetch(url,{
                 redirect: "follow",
                 method: "POST",
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8",
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({
+                    params: API_KEY
+                })
             });
             const data = await res.json();
-            if (!data.success) {
+            if (data.error) {
                 info.style.color = 'red';
-                info.innerText = 'API key không đúng!';
-                localStorage.removeItem('key_info');
                 start_button.hidden = true;
+                switch (data.error_code){
+                    case 100:
+                        info.innerText = 'API key không đúng!';
+                        break;
+                    case 101:
+                        info.innerText = 'API key đã hết hạn hoặc không khả dụng!';
+                        break;
+                    case 102:
+                        info.innerText = 'Số thiết bị sử dụng đã đạt tối đa!';
+                        break;
+                    default:
+                        info.innerText = 'API key không đúng!';
+                        break;
+                }
             } else {
                 localStorage.API_KEY = API_KEY;
                 // console.log(data)
-                localStorage.key_info = JSON.stringify({key_start_date: data.key_start_date, key_expire_date: data.key_expire_date});
+                localStorage.key_info = JSON.stringify({key_start_date: data.key_info.iat, key_expire_date: data.key_info.exp});
+                localStorage.jwt = data.jwt;
+                localStorage.jwt_exp = new Date().setHours(23, 59, 59, 999);
                 info.innerText = 'Đã xác thực API key';
                 info.style.color = '#00ff00';
                 start_button.hidden = false;
+                last_success = API_KEY;
             }
         }
         function toggle_password() {

@@ -1,6 +1,8 @@
 let pages = [];
 let current_page = 0;
-const API_KEY = localStorage.API_KEY;
+const JWT = localStorage.jwt;
+const jwt_exp = localStorage.jwt_exp;
+if (!JWT || !jwt_exp || Date.now() > jwt_exp) location.href = './index.html';
 const SETTING = {...((localStorage.setting) ? JSON.parse(localStorage.setting) : {}),...{
     file_extension: "jpeg",
     font: "cmf1",
@@ -642,9 +644,9 @@ function init(){
         file_upload.is_imported = true;
         upload_progress.innerText = 'Đang tải ảnh... Có thể mất vài phút';
         file_upload.disabled = true;
-        img2base64( images).then(urls=>{
+        img2blob( images).then(urls=>{
             localStorage.removeItem('import');
-            file_upload.import = urls.filter(e=>e) ;
+            file_upload.import = urls.filter(e=>e).map(e=>(e instanceof Blob)? URL.createObjectURL(e) : e) ;
             file_upload.disabled = false;
             file_upload.dispatchEvent(new Event('change'));
         })
@@ -1389,7 +1391,7 @@ function wrap_text(context, text, x, y, max_width, line_height) {
 }
 
 async function i2t(img){
-    const url = API_SER + '?action=i2t&key='+API_KEY;
+    const url = get_server() + '?action=i2t';
     for (let t = 0; t < 10; t ++){
         const controller = new AbortController();
         const timeout = setTimeout(()=>controller.abort("Connection timed out"),60000);
@@ -1402,12 +1404,13 @@ async function i2t(img){
                     "Content-Type": "text/plain;charset=utf-8",
                 },
                     body: JSON.stringify({
+                        jwt: JWT,
                         params: img
                     })
             });
             const data = await res.json();
-            if (data.error == "Invalid API key") {
-                alert('API key đã hết hạn!');
+            if (data.error) {
+                alert('Phiên đã hết hạn!');
                 window.location.href = './index.html';
             }
             data.forEach(e=> {e.boundingBox.rotate = (e.boundingBox.rotate +  Math.PI*2 ) % (Math.PI*2);});
@@ -1422,24 +1425,26 @@ async function i2t(img){
 }
 
 async function translate(blocks){
-    const url = API_SER + '?action=translate&key='+API_KEY;
+    const url = get_server() + '?action=translate';
     for (let t = 0; t < 10; t ++){
         const controller = new AbortController();
         const timeout = setTimeout(()=>controller.abort("Connection timed out"),20000);
         try {
             const res = await fetch(url,{
+                signal: controller.signal,
                 redirect: "follow",
                 method: "POST",
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8",
                     },
                 body: JSON.stringify({
+                    jwt: JWT,
                     params: JSON.stringify(blocks)
                 })
             });
             const data = await res.json();
-            if (data.error == "Invalid API key") {
-                alert('API key đã hết hạn!');
+            if (data.error) {
+                alert('Phiên đã hết hạn!');
                 window.location.href = './index.html';
             }
             // console.log(data);
@@ -1453,36 +1458,94 @@ async function translate(blocks){
     return null;
 }
 
-async function img2base64(urls){
-    const url = API_SER + '?action=img2base64&key='+API_KEY;
-    for (let t = 0; t < 10; t ++){
-        const controller = new AbortController();
-        const timeout = setTimeout(()=>controller.abort("Connection timed out"),60000);
-        try {
-            const res = await fetch(url,{
-                redirect: "follow",
-                method: "POST",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8",
-                    },
-                body: JSON.stringify({
-                    params: urls
-                })
-            });
-            const data = await res.json();
-            if (data.error == "Invalid API key") {
-                alert('API key đã hết hạn!');
-                window.location.href = './index.html';
-            } else if (data.error){
-                return null;
+async function img2blob(urls){
+    let time = Date.now();
+    let progress = 0;
+    upload_progress_bar.max = urls.length;
+    upload_progress_bar.value = 0;
+    upload_progress_bar.hidden = false;
+    const interval = setInterval(()=>{
+        upload_progress_bar.value = progress;
+        let estimate = Math.round((Date.now()-time) / (progress+1) * (urls.length - progress - 1) / 1000);
+        const h = (estimate/3600 > 0) ? Math.floor(estimate/3600) : 0;
+        const m = (estimate % 3600 / 60 > 0) ?  Math.floor(estimate % 3600 / 60) : 0;
+        const s = estimate % 3600 % 60;
+        upload_progress.innerText = `Đang tải ảnh... (${Math.round((progress+1)/urls.length*100)}%), ước tính còn ${(h)? h+' giờ':''} ${(m)? m+' phút':''} ${s} giây` ;
+    },1000);
+    try{
+    for (let i = 0; i < urls.length; i++) {
+        if (new URL(urls[i]).origin == 'null') continue;
+        urls[i] = await proxy_fetch(urls[i],'allOrigins',{method: 'raw',tries:5,timeout:40000});
+        progress = i;            
+    }
+    // console.log(urls)
+    
+    return urls;
+    } finally{
+        clearInterval(interval);
+        upload_progress_bar.hidden = true;
+    }
+}
+async function proxy_fetch(url,proxy,proxy_config){
+    const handler = {
+        'allOrigins': async ()=>{
+            proxy_config = {...{
+                method: 'get',
+                tries: 10,
+                timeout: 15000,
+                delay: 5000,
+            },...proxy_config};
+            const method = proxy_config.method;
+            for (let t = 0; t < proxy_config.tries; t ++){
+                const controller = new AbortController();
+                const timeout = setTimeout(()=>controller.abort("Connection timed out"),proxy_config.timeout);
+                try {
+                    const res = await fetch(`https://api.allorigins.win/${method}?url=${encodeURIComponent(url)}`,{signal: controller.signal});
+                    if (!res.ok) continue;
+                    switch (method){
+                        case "get":
+                            return (await res.json()).contents;
+                            break;
+                        case "raw":
+                            return await res.blob();
+                            break;
+                        default:
+                            return await res.text();
+                            break;
+                    }
+                } catch (error) {
+                    console.log(error);
+                } finally {
+                    clearTimeout(timeout);
+                }
+                await new Promise(r => setTimeout(r, proxy_config.delay));
             }
-            // console.log(data);
-            return data;
-        } catch (error) {
-            console.log('Connection timed out');
-        } finally {
-            clearTimeout(timeout);
+            return null
+        },
+        'cors-anywhere': async () => {
+            proxy_config = {...{
+                tries: 2,
+                timeout: 20000,
+                output: 'text'
+            },...proxy_config};
+            for (let t = 0; t < proxy_config.tries; t ++){
+                const controller = new AbortController();
+                const timeout = setTimeout(()=>controller.abort("Connection timed out"),proxy_config.timeout);
+                try {
+                    const res = await fetch(`https://cors-anywhere.herokuapp.com/${(url)}`,{signal: controller.signal});
+                    if (!res.ok) continue;
+                    if (typeof res[proxy_config.output] !== "function") return null;
+                    return await res[proxy_config.output]();
+                } catch (error) {
+                    console.log(error);
+                } finally {
+                    clearTimeout(timeout);
+                }
+                await new Promise(r => setTimeout(r, 500));
+            }
+            return null;
         }
     }
-    return null;
+    if (!handler[proxy]) throw "Unknow proxy service: "+proxy;
+    return await handler[proxy]();
 }

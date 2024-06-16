@@ -142,6 +142,10 @@
         download_btn.hidden = true;
 
         imgs = await url2img(url.value);
+        if (imgs === null) {
+            image_area.innerHTML = 'Đã hết lượt lấy ảnh, vui lòng thử lại sau 60 phút!';
+            return;
+        }
         image_area.innerHTML = '';
         if (!imgs || imgs.length < 1) image_area.innerHTML = 'Không tìm thấy ảnh';
         else {
@@ -169,22 +173,12 @@
     download_btn.addEventListener('click', async ()=>{
         download_btn.disabled = true;
         download_stage.hidden = false;
-        const dataUrls = await img2base64([...document.querySelectorAll('input[type="checkbox"]')].filter(e=>e.checked).map(e=>e.nextElementSibling.nextElementSibling.src));
+        download_stage.innerText = '\nĐang nén files...'
+        const blobUrls = await img2blob([...document.querySelectorAll('input[type="checkbox"]')].filter(e=>e.checked).map(e=>e.nextElementSibling.nextElementSibling.src));
         const zip = new JSZip();
-        for (let i = 0; i < dataUrls.length; i++) {
-            const dataUrl = dataUrls[i];
-            const base64Data = dataUrl.split(',')[1];
-            const mimeType = dataUrl.split(';')[0].split(':')[1];
-            const binaryData = atob(base64Data);
-            const arrayBuffer = new ArrayBuffer(binaryData.length);
-            const uint8Array = new Uint8Array(arrayBuffer);
-
-            for (let j = 0; j < binaryData.length; j++) {
-                uint8Array[j] = binaryData.charCodeAt(j);
-            }
-
-            const blob = new Blob([uint8Array], { type: mimeType });
-            zip.file(`image${i + 1}.${mimeType.split('/')[1]}`, blob);
+        for (let i = 0; i < blobUrls.length; i++) {
+            if (!blobUrls) continue
+            zip.file(`image${i + 1}.${blobUrls[0].type.split('/')[1]}`, blobUrls[i]);
         }
         const content = await zip.generateAsync({type: "blob"});
         const link = document.createElement('a');
@@ -197,76 +191,102 @@
     })
 
 
-    async function url2img(url_to_fetch){
-        if (!URL.canParse(url_to_fetch)) return null;
-        const url = API_SER + '?action=url2img&key='+API_KEY;
-        for (let t = 0; t < 10; t ++){
-            const controller = new AbortController();
-            const timeout = setTimeout(()=>controller.abort("Connection timed out"),20000);
-            try {
-                const res = await fetch(url,{
-                    redirect: "follow",
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8",
-                        },
-                    body: JSON.stringify({
-                        params: url_to_fetch
-                    })
-                });
-                const data = await res.json();
-                if (data.error == "Invalid API key") {
-                    alert('API key đã hết hạn!');
-                    window.location.href = './index.html';
-                } else if (data.error){
-                    return null;
-                }
-                const urls = [...data].map(e=>e.url);
-                // console.log(data);
-                return data.filter((e,i)=>urls.indexOf(e.url) == i).map((e,i)=>{return {
-                    url: new URL(e.url,url_to_fetch).href,
-                    alt: e.alt,
-                    id: i
-                }})
-            } catch (error) {
-                console.log('Connection timed out');
-            } finally {
-                clearTimeout(timeout);
-            }
-        }
-        return null;
+    async function url2img(url){
+        if (!URL.canParse(url)) return null;
+        const base = new URL(url).origin;
+        const this_org = location.href.slice(0,-location.href.split('/').at(-1).length-1);
+        const this_org_1 = new URL(location.href).origin;
+
+        const text = await proxy_fetch(url,'allOrigins',{timeout: 300000,tries: 2});
+        if (!text) return null;
+        const doc = new DOMParser().parseFromString(text,'text/html');
+        const imgs = [...doc.querySelectorAll('img')].filter(e=>e.src).map((e,i)=>{return {id: i,alt: e.alt, url: e.src.replace(this_org,base).replace(this_org_1,base)}});
+        return imgs;
     }
 
-    async function img2base64(urls){
-        const url = API_SER + '?action=img2base64&key='+API_KEY;
-        for (let t = 0; t < 10; t ++){
-            const controller = new AbortController();
-            const timeout = setTimeout(()=>controller.abort("Connection timed out"),60000);
-            try {
-                const res = await fetch(url,{
-                    redirect: "follow",
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8",
-                        },
-                    body: JSON.stringify({
-                        params: urls
-                    })
-                });
-                const data = await res.json();
-                if (data.error == "Invalid API key") {
-                    alert('API key đã hết hạn!');
-                    window.location.href = './index.html';
-                } else if (data.error){
-                    return null;
+    async function img2blob(urls){
+        let time = Date.now();
+        let progress = 0;
+        const interval = setInterval(()=>{
+            let estimate = Math.round((Date.now()-time) / (progress+1) * (urls.length - progress - 1) / 1000);
+            const h = (estimate/3600 > 0) ? Math.floor(estimate/3600) : 0;
+            const m = (estimate % 3600 / 60 > 0) ?  Math.floor(estimate % 3600 / 60) : 0;
+            const s = estimate % 3600 % 60;
+            download_stage.innerText = `\nĐang nén files... (${Math.round((progress+1)/urls.length*100)}%), ước tính còn ${(h)? h+' giờ':''} ${(m)? m+' phút':''} ${s} giây` ;
+        },1000);
+        try{
+        for (let i = 0; i < urls.length; i++) {
+            if (new URL(urls[i]).origin == 'null') continue;
+            urls[i] = await proxy_fetch(urls[i],'allOrigins',{method: 'raw',tries:5,timeout:40000});
+            progress = i;            
+        }
+        
+        return urls;
+        } finally{
+            clearInterval(interval);
+        }
+    }
+    async function proxy_fetch(url,proxy,proxy_config){
+        const handler = {
+            'allOrigins': async ()=>{
+                proxy_config = {...{
+                    method: 'get',
+                    tries: 10,
+                    timeout: 15000,
+                    delay: 5000,
+                },...proxy_config};
+                const method = proxy_config.method;
+                for (let t = 0; t < proxy_config.tries; t ++){
+                    const controller = new AbortController();
+                    const timeout = setTimeout(()=>controller.abort("Connection timed out"),proxy_config.timeout);
+                    try {
+                        const res = await fetch(`https://api.allorigins.win/${method}?url=${encodeURIComponent(url)}`,{signal: controller.signal});
+                        if (!res.ok) continue;
+                        switch (method){
+                            case "get":
+                                return (await res.json()).contents;
+                                break;
+                            case "raw":
+                                return await res.blob();
+                                break;
+                            default:
+                                return await res.text();
+                                break;
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    } finally {
+                        clearTimeout(timeout);
+                    }
+                    await new Promise(r => setTimeout(r, proxy_config.delay));
                 }
-                return data;
-            } catch (error) {
-                console.log('Connection timed out');
-            } finally {
-                clearTimeout(timeout);
+                return null
+            },
+            'cors-anywhere': async () => {
+                proxy_config = {...{
+                    tries: 2,
+                    timeout: 20000,
+                    output: 'text'
+                },...proxy_config};
+                for (let t = 0; t < proxy_config.tries; t ++){
+                    const controller = new AbortController();
+                    const timeout = setTimeout(()=>controller.abort("Connection timed out"),proxy_config.timeout);
+                    try {
+                        const res = await fetch(`https://cors-anywhere.herokuapp.com/${(url)}`,{signal: controller.signal});
+                        if (!res.ok) continue;
+                        if (typeof res[proxy_config.output] !== "function") return null;
+                        return await res[proxy_config.output]();
+                    } catch (error) {
+                        console.log(error);
+                    } finally {
+                        clearTimeout(timeout);
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+                }
+                return null;
             }
         }
-        return null;
+        if (!handler[proxy]) throw "Unknow proxy service: "+proxy;
+        return await handler[proxy]();
     }
 </script>

@@ -41,6 +41,7 @@ h1 {
     height: 100px;
     color: white;
     border: 3px dashed white;
+    border-radius: 10px;
     background-color: var(--button-1);
     display:grid;
 }
